@@ -736,6 +736,7 @@ function setupMobileNavigation() {
     rightPanel.classList.remove('mobile-active');
     editorWrapper.classList.remove('mobile-active');
     toolsPanel.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
     if (tabsContainer) tabsContainer.style.display = 'none';
 
     document.querySelectorAll('.console-panel, .preview-panel').forEach(p => p.classList.remove('active'));
@@ -744,6 +745,7 @@ function setupMobileNavigation() {
       case 'files':
         sidebar.classList.add('mobile-open');
         sidebarOverlay.classList.add('active');
+        document.body.classList.add('sidebar-open');
         break;
       case 'editor':
         editorWrapper.classList.add('mobile-active');
@@ -781,8 +783,19 @@ function setupMobileNavigation() {
   sidebarOverlay.addEventListener('click', () => {
     sidebar.classList.remove('mobile-open');
     sidebarOverlay.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
     switchMobileView('editor');
   });
+  
+  const closeSidebarMobile = document.getElementById('close-sidebar-mobile');
+  if (closeSidebarMobile) {
+    closeSidebarMobile.addEventListener('click', () => {
+      sidebar.classList.remove('mobile-open');
+      sidebarOverlay.classList.remove('active');
+      document.body.classList.remove('sidebar-open');
+      switchMobileView('editor');
+    });
+  }
 
   function handleResize() {
     if (isMobile()) {

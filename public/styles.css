@@ -953,6 +953,19 @@ body {
     transform: translateX(0);
   }
   
+  .sidebar.mobile-open ~ .mobile-nav,
+  body.sidebar-open .mobile-nav {
+    display: none !important;
+  }
+  
+  .close-sidebar-btn {
+    display: flex !important;
+  }
+  
+  .toggle-sidebar-desktop {
+    display: none !important;
+  }
+  
   .sidebar-footer {
     flex-shrink: 0;
   }
@@ -1083,6 +1096,14 @@ body {
 
   .tools-panel {
     display: none !important;
+  }
+  
+  .close-sidebar-btn {
+    display: none !important;
+  }
+  
+  .toggle-sidebar-desktop {
+    display: flex !important;
   }
 }
 
