@@ -37,6 +37,46 @@ function sanitizePath(basePath, userPath) {
   return resolved;
 }
 
+function isPathSafe(basePath, targetPath) {
+  const resolvedBase = path.resolve(basePath);
+  const resolvedTarget = path.resolve(basePath, targetPath);
+  const relative = path.relative(resolvedBase, resolvedTarget);
+  
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    return false;
+  }
+  
+  return true;
+}
+
+function safeReadFile(basePath, filePath) {
+  try {
+    if (!isPathSafe(basePath, filePath)) {
+      return null;
+    }
+    
+    const fullPath = path.resolve(basePath, filePath);
+    
+    if (!fs.existsSync(fullPath)) {
+      return null;
+    }
+    
+    const stats = fs.lstatSync(fullPath);
+    if (stats.isSymbolicLink()) {
+      return null;
+    }
+    
+    const realPath = fs.realpathSync(fullPath);
+    if (!isPathSafe(basePath, path.relative(basePath, realPath))) {
+      return null;
+    }
+    
+    return fs.readFileSync(fullPath, 'utf-8');
+  } catch (e) {
+    return null;
+  }
+}
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
@@ -270,6 +310,192 @@ app.post('/api/run', (req, res) => {
     
     res.json({ output: stdout || stderr || 'Program executed successfully with no output.', type: 'success' });
   });
+});
+
+app.post('/api/run-project/:project', (req, res) => {
+  try {
+    const projectName = req.params.project;
+    
+    if (!projectName || projectName.includes('..') || projectName.includes('/') || projectName.includes('\\')) {
+      return res.status(403).json({ error: 'Invalid project name' });
+    }
+    
+    if (!isPathSafe(projectsDir, projectName)) {
+      return res.status(403).json({ error: 'Invalid project path' });
+    }
+    
+    const projectPath = path.join(projectsDir, projectName);
+    
+    if (!fs.existsSync(projectPath)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    const files = fs.readdirSync(projectPath);
+    
+    const entryPriority = ['index.html', 'main.html', 'app.html', 'home.html'];
+    let entryFile = null;
+    
+    for (const priority of entryPriority) {
+      if (files.includes(priority)) {
+        entryFile = priority;
+        break;
+      }
+    }
+    
+    if (!entryFile) {
+      entryFile = files.find(f => f.endsWith('.html'));
+    }
+    
+    if (!entryFile) {
+      const jsFile = files.find(f => f === 'main.js' || f === 'index.js' || f === 'app.js' || f === 'script.js');
+      if (jsFile) {
+        const jsContent = safeReadFile(projectPath, jsFile);
+        if (!jsContent) {
+          return res.status(403).json({ error: 'Cannot read file - possible symlink attack' });
+        }
+        const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${projectName}</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+    #output { background: #0d1117; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; }
+    .log { color: #7ee787; margin: 2px 0; }
+    .error { color: #f85149; }
+    .warn { color: #d29922; }
+  </style>
+</head>
+<body>
+  <h2>Console Output - ${jsFile}</h2>
+  <div id="output"></div>
+  <script>
+    const output = document.getElementById('output');
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.log = function(...args) {
+      const div = document.createElement('div');
+      div.className = 'log';
+      div.textContent = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' ');
+      output.appendChild(div);
+      originalLog.apply(console, args);
+    };
+    
+    console.error = function(...args) {
+      const div = document.createElement('div');
+      div.className = 'error';
+      div.textContent = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' ');
+      output.appendChild(div);
+      originalError.apply(console, args);
+    };
+    
+    console.warn = function(...args) {
+      const div = document.createElement('div');
+      div.className = 'warn';
+      div.textContent = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' ');
+      output.appendChild(div);
+      originalWarn.apply(console, args);
+    };
+    
+    try {
+      ${jsContent}
+    } catch(e) {
+      console.error('Error: ' + e.message);
+    }
+  </script>
+</body>
+</html>`;
+        return res.json({
+          type: 'html',
+          content: htmlContent,
+          entryFile: jsFile,
+          output: 'JavaScript executed in browser preview'
+        });
+      }
+      
+      const pyFile = files.find(f => f === 'main.py' || f === 'app.py' || f === 'index.py' || f.endsWith('.py'));
+      if (pyFile) {
+        const pyPath = path.join(projectPath, pyFile);
+        return new Promise((resolve) => {
+          exec(`python3 "${pyPath}"`, { timeout: 10000, maxBuffer: 1024 * 1024, cwd: projectPath }, (error, stdout, stderr) => {
+            const output = error ? (stderr || error.message) : (stdout || 'No output');
+            const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${projectName} - Python</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
+    #output { background: #0d1117; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; color: ${error ? '#f85149' : '#7ee787'}; }
+  </style>
+</head>
+<body>
+  <h2>Python Output - ${pyFile}</h2>
+  <div id="output">${output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+</body>
+</html>`;
+            res.json({
+              type: 'html',
+              content: htmlContent,
+              entryFile: pyFile,
+              output: output
+            });
+          });
+        });
+      }
+      
+      return res.json({
+        type: 'error',
+        output: 'No executable file found. Create index.html, main.js, or main.py',
+        content: `<!DOCTYPE html>
+<html><head><title>No Entry File</title>
+<style>body{font-family:sans-serif;background:#1a1a2e;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
+.msg{text-align:center;}.icon{font-size:48px;margin-bottom:20px;}</style></head>
+<body><div class="msg"><div class="icon">📁</div><h2>No executable file found</h2><p>Create one of these files to run your project:</p><ul style="text-align:left;"><li>index.html - for web pages</li><li>main.js - for JavaScript</li><li>main.py - for Python</li></ul></div></body></html>`
+      });
+    }
+    
+    let htmlContent = safeReadFile(projectPath, entryFile);
+    if (!htmlContent) {
+      return res.status(403).json({ error: 'Cannot read entry file - possible symlink attack' });
+    }
+    
+    htmlContent = htmlContent.replace(/<link[^>]+href=["']([^"']+\.css)["'][^>]*>/gi, (match, cssPath) => {
+      if (cssPath.startsWith('http://') || cssPath.startsWith('https://') || cssPath.startsWith('//')) {
+        return match;
+      }
+      const cssContent = safeReadFile(projectPath, cssPath);
+      if (cssContent) {
+        return `<style>/* ${cssPath} */\n${cssContent}</style>`;
+      }
+      return match;
+    });
+    
+    htmlContent = htmlContent.replace(/<script[^>]+src=["']([^"']+\.js)["'][^>]*><\/script>/gi, (match, jsPath) => {
+      if (jsPath.startsWith('http://') || jsPath.startsWith('https://') || jsPath.startsWith('//')) {
+        return match;
+      }
+      const jsContent = safeReadFile(projectPath, jsPath);
+      if (jsContent) {
+        return `<script>/* ${jsPath} */\n${jsContent}</script>`;
+      }
+      return match;
+    });
+    
+    res.json({
+      type: 'html',
+      content: htmlContent,
+      entryFile: entryFile,
+      output: `Running ${entryFile} with all linked assets`
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/api/shell', (req, res) => {

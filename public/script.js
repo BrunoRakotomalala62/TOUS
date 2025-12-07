@@ -441,40 +441,30 @@ async function saveCurrentFile() {
 }
 
 async function runCode() {
-  // Check if a file is selected
-  if (!currentFile || currentFile === 'welcome') {
-    showConsoleOutput('Please open a file first! Click on a file in the FILES panel (index.html, main.js, etc.)', 'warning');
-    switchToPanel('console');
-    return;
-  }
-  
-  const code = editor.getValue();
-  const language = getLanguageFromPath(currentFile);
-  
-  // Check if language is supported
-  if (!language || language === 'plaintext') {
-    showConsoleOutput(`File type not supported for execution. Supported: .js, .py, .html`, 'warning');
-    switchToPanel('console');
-    return;
-  }
-  
-  showConsoleOutput('Running...', 'info');
+  showConsoleOutput('Running project...', 'info');
   
   try {
-    const response = await fetch('/api/run', {
+    const response = await fetch(`/api/run-project/${currentProject}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, language })
+      headers: { 'Content-Type': 'application/json' }
     });
     
     const data = await response.json();
     
-    if (data.type === 'html') {
+    if (data.content) {
       updatePreview(data.content);
       switchToPanel('preview');
-      showConsoleOutput('HTML preview updated', 'success');
+      
+      if (data.entryFile) {
+        showConsoleOutput(`Running ${data.entryFile}`, 'success');
+      } else {
+        showConsoleOutput(data.output || 'Preview updated', data.type === 'error' ? 'error' : 'success');
+      }
+    } else if (data.error) {
+      showConsoleOutput(`Error: ${data.error}`, 'error');
+      switchToPanel('console');
     } else {
-      showConsoleOutput(data.output, data.type);
+      showConsoleOutput(data.output || 'No output', data.type || 'info');
       switchToPanel('console');
     }
   } catch (error) {
