@@ -610,6 +610,155 @@
     </div>
   </div>
 
+  <div class="agent-panel" id="agent-panel">
+    <div class="agent-header">
+      <button class="agent-back" id="agent-back">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="agent-title">
+        <i class="fas fa-robot"></i>
+        <span>AI Agent</span>
+      </div>
+      <div class="agent-actions">
+        <button class="agent-action-btn" id="agent-search-btn" title="Web Search">
+          <i class="fas fa-globe"></i>
+        </button>
+        <button class="agent-action-btn" id="agent-clear" title="Clear Chat">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="agent-toolbar">
+      <button class="agent-tool active" data-tool="chat">
+        <i class="fas fa-comments"></i>
+        <span>Chat</span>
+      </button>
+      <button class="agent-tool" data-tool="analyze">
+        <i class="fas fa-bug"></i>
+        <span>Analyze</span>
+      </button>
+      <button class="agent-tool" data-tool="generate">
+        <i class="fas fa-magic"></i>
+        <span>Generate</span>
+      </button>
+      <button class="agent-tool" data-tool="search">
+        <i class="fas fa-search"></i>
+        <span>Search</span>
+      </button>
+    </div>
+    
+    <div class="agent-content">
+      <div class="agent-chat-view active" id="agent-chat-view">
+        <div class="agent-messages" id="agent-messages">
+          <div class="agent-welcome">
+            <div class="agent-welcome-icon">
+              <i class="fas fa-robot"></i>
+            </div>
+            <h3>AI Coding Assistant</h3>
+            <p>I can help you with:</p>
+            <div class="agent-capabilities">
+              <div class="capability">
+                <i class="fas fa-bug"></i>
+                <span>Detect & fix bugs</span>
+              </div>
+              <div class="capability">
+                <i class="fas fa-code"></i>
+                <span>Write & edit code</span>
+              </div>
+              <div class="capability">
+                <i class="fas fa-lightbulb"></i>
+                <span>Explain concepts</span>
+              </div>
+              <div class="capability">
+                <i class="fas fa-globe"></i>
+                <span>Search the web</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="agent-input-container">
+          <div class="agent-input-wrapper">
+            <textarea id="agent-input" placeholder="Ask me anything about your code..." rows="1"></textarea>
+            <button id="agent-send" class="agent-send-btn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+          <div class="agent-quick-actions">
+            <button class="quick-action" data-action="find-bugs">
+              <i class="fas fa-bug"></i> Find bugs
+            </button>
+            <button class="quick-action" data-action="optimize">
+              <i class="fas fa-bolt"></i> Optimize
+            </button>
+            <button class="quick-action" data-action="explain">
+              <i class="fas fa-question-circle"></i> Explain
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="agent-analyze-view" id="agent-analyze-view">
+        <div class="analyze-options">
+          <h4>Analyze Current Code</h4>
+          <button class="analyze-btn" data-type="bugs">
+            <i class="fas fa-bug"></i>
+            <div>
+              <span>Find Bugs</span>
+              <small>Detect issues and errors</small>
+            </div>
+          </button>
+          <button class="analyze-btn" data-type="optimize">
+            <i class="fas fa-bolt"></i>
+            <div>
+              <span>Optimize</span>
+              <small>Improve performance</small>
+            </div>
+          </button>
+          <button class="analyze-btn" data-type="explain">
+            <i class="fas fa-book"></i>
+            <div>
+              <span>Explain</span>
+              <small>Understand the code</small>
+            </div>
+          </button>
+        </div>
+        <div class="analyze-result" id="analyze-result"></div>
+      </div>
+      
+      <div class="agent-generate-view" id="agent-generate-view">
+        <div class="generate-form">
+          <h4>Generate Code</h4>
+          <select id="generate-language">
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="typescript">TypeScript</option>
+          </select>
+          <textarea id="generate-prompt" placeholder="Describe what code you want to generate..." rows="4"></textarea>
+          <button id="generate-btn" class="btn btn-primary">
+            <i class="fas fa-magic"></i> Generate Code
+          </button>
+        </div>
+        <div class="generate-result" id="generate-result"></div>
+      </div>
+      
+      <div class="agent-search-view" id="agent-search-view">
+        <div class="search-form">
+          <h4>Smart Web Search</h4>
+          <div class="search-input-group">
+            <input type="text" id="web-search-input" placeholder="Search for programming topics, documentation...">
+            <button id="web-search-btn" class="btn btn-primary">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
   <script src="script.js"></script>
 </body>

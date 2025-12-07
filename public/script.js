@@ -1278,3 +1278,379 @@ async function handleContextAction(action, path, type) {
       break;
   }
 }
+
+let agentConversationId = null;
+
+function setupAgentPanel() {
+  const agentPanel = document.getElementById('agent-panel');
+  const agentBack = document.getElementById('agent-back');
+  const agentClear = document.getElementById('agent-clear');
+  const agentInput = document.getElementById('agent-input');
+  const agentSend = document.getElementById('agent-send');
+  const agentMessages = document.getElementById('agent-messages');
+  
+  agentBack.addEventListener('click', closeAgent);
+  
+  agentClear.addEventListener('click', () => {
+    agentMessages.innerHTML = `
+      <div class="agent-welcome">
+        <div class="agent-welcome-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h3>AI Coding Assistant</h3>
+        <p>I can help you with:</p>
+        <div class="agent-capabilities">
+          <div class="capability">
+            <i class="fas fa-bug"></i>
+            <span>Detect & fix bugs</span>
+          </div>
+          <div class="capability">
+            <i class="fas fa-code"></i>
+            <span>Write & edit code</span>
+          </div>
+          <div class="capability">
+            <i class="fas fa-lightbulb"></i>
+            <span>Explain concepts</span>
+          </div>
+          <div class="capability">
+            <i class="fas fa-globe"></i>
+            <span>Search the web</span>
+          </div>
+        </div>
+      </div>
+    `;
+    agentConversationId = null;
+  });
+
+  document.querySelectorAll('.agent-tool').forEach(tool => {
+    tool.addEventListener('click', () => {
+      document.querySelectorAll('.agent-tool').forEach(t => t.classList.remove('active'));
+      tool.classList.add('active');
+      
+      const toolName = tool.dataset.tool;
+      document.querySelectorAll('.agent-chat-view, .agent-analyze-view, .agent-generate-view, .agent-search-view')
+        .forEach(v => v.classList.remove('active'));
+      document.getElementById(`agent-${toolName}-view`)?.classList.add('active');
+    });
+  });
+
+  agentInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendAgentMessage();
+    }
+  });
+
+  agentInput.addEventListener('input', () => {
+    agentInput.style.height = 'auto';
+    agentInput.style.height = Math.min(agentInput.scrollHeight, 120) + 'px';
+  });
+
+  agentSend.addEventListener('click', sendAgentMessage);
+
+  document.querySelectorAll('.quick-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      let message = '';
+      
+      switch (action) {
+        case 'find-bugs':
+          message = 'Please analyze the current code and find any bugs or issues.';
+          break;
+        case 'optimize':
+          message = 'Please optimize the current code for better performance and readability.';
+          break;
+        case 'explain':
+          message = 'Please explain what this code does in detail.';
+          break;
+      }
+      
+      agentInput.value = message;
+      sendAgentMessage();
+    });
+  });
+
+  document.querySelectorAll('.analyze-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      analyzeCode(btn.dataset.type);
+    });
+  });
+
+  document.getElementById('generate-btn')?.addEventListener('click', generateCode);
+  document.getElementById('web-search-btn')?.addEventListener('click', performWebSearch);
+  
+  document.getElementById('web-search-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      performWebSearch();
+    }
+  });
+
+  document.querySelectorAll('.new-tab-item').forEach(item => {
+    const title = item.querySelector('.new-tab-item-title')?.textContent;
+    if (title === 'Agent') {
+      item.addEventListener('click', openAgent);
+    }
+  });
+}
+
+function openAgent() {
+  const agentPanel = document.getElementById('agent-panel');
+  agentPanel.classList.add('active');
+  
+  const newTabPanel = document.getElementById('new-tab-panel');
+  if (newTabPanel) newTabPanel.classList.remove('active');
+  
+  document.getElementById('agent-input')?.focus();
+}
+
+function closeAgent() {
+  const agentPanel = document.getElementById('agent-panel');
+  agentPanel.classList.remove('active');
+}
+
+async function sendAgentMessage() {
+  const agentInput = document.getElementById('agent-input');
+  const agentMessages = document.getElementById('agent-messages');
+  const message = agentInput.value.trim();
+  
+  if (!message) return;
+
+  const welcome = agentMessages.querySelector('.agent-welcome');
+  if (welcome) welcome.remove();
+
+  appendAgentMessage('user', message);
+  agentInput.value = '';
+  agentInput.style.height = 'auto';
+
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'agent-loading';
+  loadingDiv.innerHTML = '<div class="spinner"></div><span>Thinking...</span>';
+  agentMessages.appendChild(loadingDiv);
+  agentMessages.scrollTop = agentMessages.scrollHeight;
+
+  try {
+    const response = await fetch('/api/agent/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        project: currentProject,
+        conversationId: agentConversationId
+      })
+    });
+
+    loadingDiv.remove();
+
+    const data = await response.json();
+    
+    if (data.error) {
+      appendAgentMessage('assistant', `Error: ${data.error}`);
+      return;
+    }
+
+    agentConversationId = data.conversationId;
+    appendAgentMessage('assistant', data.response, data.codeBlocks);
+  } catch (error) {
+    loadingDiv.remove();
+    appendAgentMessage('assistant', `Error: ${error.message}`);
+  }
+}
+
+function appendAgentMessage(role, content, codeBlocks = []) {
+  const agentMessages = document.getElementById('agent-messages');
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `agent-message ${role}`;
+  
+  let formattedContent = escapeHtml(content)
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      return `<pre><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`;
+    })
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  messageDiv.innerHTML = `<div class="message-content">${formattedContent}</div>`;
+  
+  if (role === 'assistant' && codeBlocks.length > 0) {
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'code-block-actions';
+    actionsDiv.innerHTML = `
+      <button class="copy-btn" title="Copy code">
+        <i class="fas fa-copy"></i> Copy
+      </button>
+      <button class="apply-btn" title="Apply to editor">
+        <i class="fas fa-check"></i> Apply
+      </button>
+    `;
+    
+    actionsDiv.querySelector('.copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(codeBlocks[0].code);
+      showConsoleOutput('Code copied to clipboard!', 'success');
+    });
+    
+    actionsDiv.querySelector('.apply-btn').addEventListener('click', () => {
+      if (currentFile && editor) {
+        editor.setValue(codeBlocks[0].code);
+        showConsoleOutput('Code applied to editor!', 'success');
+      } else {
+        showConsoleOutput('Please open a file first', 'info');
+      }
+    });
+    
+    messageDiv.querySelector('.message-content').appendChild(actionsDiv);
+  }
+  
+  agentMessages.appendChild(messageDiv);
+  agentMessages.scrollTop = agentMessages.scrollHeight;
+}
+
+async function analyzeCode(type) {
+  const analyzeResult = document.getElementById('analyze-result');
+  
+  if (!editor) {
+    analyzeResult.innerHTML = '<p style="color: var(--accent-error);">No code to analyze. Please open a file first.</p>';
+    return;
+  }
+
+  const code = editor.getValue();
+  const language = getLanguageFromPath(currentFile);
+
+  analyzeResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Analyzing code...</span></div>';
+
+  try {
+    const response = await fetch('/api/agent/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, language, type })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      analyzeResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
+      return;
+    }
+
+    let formattedAnalysis = escapeHtml(data.analysis)
+      .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+      })
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    analyzeResult.innerHTML = `<div class="analysis-content">${formattedAnalysis}</div>`;
+  } catch (error) {
+    analyzeResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${error.message}</p>`;
+  }
+}
+
+async function generateCode() {
+  const generateResult = document.getElementById('generate-result');
+  const prompt = document.getElementById('generate-prompt').value.trim();
+  const language = document.getElementById('generate-language').value;
+
+  if (!prompt) {
+    generateResult.innerHTML = '<p style="color: var(--accent-warning);">Please describe what code you want to generate.</p>';
+    return;
+  }
+
+  generateResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Generating code...</span></div>';
+
+  try {
+    const response = await fetch('/api/agent/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        prompt, 
+        language,
+        context: currentFile ? editor?.getValue() : null
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      generateResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
+      return;
+    }
+
+    generateResult.innerHTML = `
+      <pre><code>${escapeHtml(data.code)}</code></pre>
+      <div class="code-block-actions">
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${data.code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`); showConsoleOutput('Code copied!', 'success');">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+        <button class="apply-btn" onclick="if(editor) { editor.setValue(\`${data.code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`); showConsoleOutput('Code applied!', 'success'); }">
+          <i class="fas fa-check"></i> Apply to Editor
+        </button>
+      </div>
+    `;
+  } catch (error) {
+    generateResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${error.message}</p>`;
+  }
+}
+
+async function performWebSearch() {
+  const searchResults = document.getElementById('search-results');
+  const query = document.getElementById('web-search-input').value.trim();
+
+  if (!query) {
+    searchResults.innerHTML = '<p style="color: var(--accent-warning);">Please enter a search query.</p>';
+    return;
+  }
+
+  searchResults.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Searching the web...</span></div>';
+
+  try {
+    const response = await fetch('/api/agent/smart-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        query,
+        context: currentFile ? editor?.getValue()?.substring(0, 2000) : null
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      searchResults.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
+      return;
+    }
+
+    let resultsHtml = `
+      <div class="search-answer">
+        <h4>AI Summary</h4>
+        <p>${escapeHtml(data.response).replace(/\n/g, '<br>')}</p>
+      </div>
+    `;
+
+    if (data.sources && data.sources.length > 0) {
+      resultsHtml += '<h4 style="margin: 20px 0 12px;">Sources</h4>';
+      data.sources.forEach(source => {
+        resultsHtml += `
+          <div class="search-result-item">
+            <h5>${escapeHtml(source.title)}</h5>
+            <p>${escapeHtml(source.snippet)}</p>
+            <a href="${source.url}" target="_blank">${source.url}</a>
+          </div>
+        `;
+      });
+    }
+
+    searchResults.innerHTML = resultsHtml;
+  } catch (error) {
+    searchResults.innerHTML = `<p style="color: var(--accent-error);">Error: ${error.message}</p>`;
+  }
+}
+
+window.openAgent = openAgent;
+window.closeAgent = closeAgent;
+
+const originalSetupEventListeners = setupEventListeners;
+setupEventListeners = function() {
+  originalSetupEventListeners();
+  setupAgentPanel();
+};
