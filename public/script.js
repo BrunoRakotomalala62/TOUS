@@ -542,6 +542,56 @@ function setupDropdownMenus() {
   });
 }
 
+function setupNewTabPanel() {
+  const newTabPanel = document.getElementById('new-tab-panel');
+  const newTabBtn = document.getElementById('new-tab-btn');
+  const newTabClose = document.getElementById('new-tab-close');
+  const newTabSearch = document.getElementById('new-tab-search');
+  
+  newTabBtn.addEventListener('click', () => {
+    newTabPanel.classList.add('active');
+    newTabSearch.focus();
+  });
+  
+  newTabClose.addEventListener('click', () => {
+    newTabPanel.classList.remove('active');
+  });
+  
+  document.querySelectorAll('.new-tab-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const action = item.dataset.action;
+      newTabPanel.classList.remove('active');
+      
+      if (action === 'console') {
+        if (window.innerWidth <= 768) {
+          document.querySelector('.mobile-nav-item[data-view="console"]')?.click();
+        } else {
+          switchToPanel('console');
+        }
+      } else if (action === 'preview') {
+        if (window.innerWidth <= 768) {
+          document.querySelector('.mobile-nav-item[data-view="preview"]')?.click();
+        } else {
+          switchToPanel('preview');
+        }
+      }
+    });
+  });
+  
+  newTabSearch.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.new-tab-item').forEach(item => {
+      const title = item.querySelector('.new-tab-item-title')?.textContent.toLowerCase() || '';
+      const desc = item.querySelector('.new-tab-item-desc')?.textContent.toLowerCase() || '';
+      if (title.includes(query) || desc.includes(query)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  });
+}
+
 function setupMobileNavigation() {
   const mobileNav = document.getElementById('mobile-nav');
   const sidebar = document.getElementById('sidebar');
@@ -646,6 +696,7 @@ function setupEventListeners() {
   
   setupDropdownMenus();
   setupMobileNavigation();
+  setupNewTabPanel();
   
   document.getElementById('project-select').addEventListener('change', (e) => {
     currentProject = e.target.value;
