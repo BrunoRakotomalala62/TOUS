@@ -10,7 +10,13 @@ const app = express();
 const PORT = 5000;
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openaiClient = null;
+function getOpenAI() {
+  if (!openaiClient && process.env.OPENAI_API_KEY) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
+}
 
 let browser = null;
 async function getBrowser() {
@@ -385,13 +391,6 @@ const agentConversations = new Map();
 app.post('/api/agent/chat', async (req, res) => {
   try {
     const { message, project, files, conversationId } = req.body;
-    
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(400).json({ 
-        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your secrets.',
-        type: 'config_error'
-      });
-    }
 
     let projectFiles = {};
     if (project) {
@@ -436,6 +435,14 @@ When detecting bugs, explain what the bug is, why it's a problem, and how to fix
     
     conversationHistory.push({ role: 'user', content: message });
 
+    const openai = getOpenAI();
+    if (!openai) {
+      return res.status(400).json({ 
+        error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your secrets.',
+        type: 'config_error'
+      });
+    }
+
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
       messages: [
@@ -477,13 +484,6 @@ When detecting bugs, explain what the bug is, why it's a problem, and how to fix
 app.post('/api/agent/analyze', async (req, res) => {
   try {
     const { code, language, type } = req.body;
-    
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(400).json({ 
-        error: 'OpenAI API key not configured.',
-        type: 'config_error'
-      });
-    }
 
     let prompt;
     switch (type) {
@@ -529,6 +529,14 @@ ${code}
         prompt = `Analyze this ${language} code and provide insights:\n\`\`\`${language}\n${code}\n\`\`\``;
     }
 
+    const openai = getOpenAI();
+    if (!openai) {
+      return res.status(400).json({ 
+        error: 'OpenAI API key not configured.',
+        type: 'config_error'
+      });
+    }
+
     const response = await openai.chat.completions.create({
       model: 'gpt-5',
       messages: [
@@ -552,7 +560,8 @@ app.post('/api/agent/generate', async (req, res) => {
   try {
     const { prompt, language, context } = req.body;
     
-    if (!process.env.OPENAI_API_KEY) {
+    const openai = getOpenAI();
+    if (!openai) {
       return res.status(400).json({ 
         error: 'OpenAI API key not configured.',
         type: 'config_error'
@@ -591,7 +600,20 @@ app.post('/api/agent/apply-fix', async (req, res) => {
   try {
     const { project, filePath, newContent } = req.body;
     
+    if (!project || !filePath || typeof newContent !== 'string') {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    if (project.includes('..') || project.includes('/') || project.includes('\\')) {
+      return res.status(403).json({ error: 'Invalid project name' });
+    }
+    
     const projectPath = path.join(projectsDir, project);
+    
+    if (!fs.existsSync(projectPath)) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
     const fullPath = sanitizePath(projectPath, filePath);
     
     if (!fullPath) {
@@ -689,7 +711,8 @@ app.post('/api/agent/smart-search', async (req, res) => {
   try {
     const { query, context } = req.body;
     
-    if (!process.env.OPENAI_API_KEY) {
+    const openai = getOpenAI();
+    if (!openai) {
       return res.status(400).json({ 
         error: 'OpenAI API key not configured.',
         type: 'config_error'
