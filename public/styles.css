@@ -2426,3 +2426,25 @@ body {
   font-family: var(--font-mono);
   font-size: 0.875rem;
 }
+
+.agent-action-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: rgba(88, 166, 255, 0.1);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.agent-action-status.success {
+  background: rgba(63, 185, 80, 0.1);
+  border-color: var(--accent-success);
+}
+
+.agent-action-status i {
+  font-size: 1rem;
+}

@@ -40,6 +40,12 @@ A dynamic code editor platform similar to Replit, built with Node.js, Express, a
 - `POST /api/create-project` - Create new project
 
 ## Recent Changes
+- **December 8, 2025**: Automatic File Creation
+  - AI now automatically creates files in your project when it generates code
+  - Files are detected by filename comments at the top of code blocks (e.g., `// app.js`)
+  - Visual feedback shows which files are being created
+  - File tree refreshes automatically after file creation
+  
 - **December 7, 2025**: Added Puter.js AI Integration
   - Integrated Puter.js for free, unlimited Claude 3.7 Sonnet AI
   - AI agent can now modify code, create files/projects, detect bugs, and answer coding questions

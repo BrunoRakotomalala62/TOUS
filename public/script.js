@@ -1474,12 +1474,32 @@ Current project: ${currentProject}
 Project files:
 ${projectFiles}
 
-IMPORTANT CAPABILITIES:
-1. When asked to create a file, provide the file content in a code block and specify the filename.
-2. When asked to modify code, provide the complete modified file content.
-3. When detecting bugs, explain what the bug is, why it's a problem, and how to fix it.
-4. Be helpful, concise, and provide actionable solutions.
-5. Format code suggestions with the filename as a comment at the top.`;
+CRITICAL FILE CREATION RULES (MUST FOLLOW):
+When creating or suggesting code files, you MUST ALWAYS include the filename as a comment on the FIRST LINE of each code block:
+- For JavaScript/TypeScript: // filename.js
+- For HTML: <!-- filename.html -->
+- For CSS: /* filename.css */
+- For Python: # filename.py
+
+Example:
+\`\`\`javascript
+// app.js
+console.log("Hello World");
+\`\`\`
+
+\`\`\`html
+<!-- index.html -->
+<!DOCTYPE html>
+<html>...</html>
+\`\`\`
+
+This allows the system to automatically create the files in the project. Files without proper filename comments will NOT be created automatically.
+
+OTHER GUIDELINES:
+1. When asked to modify code, provide the complete modified file content with filename comment.
+2. When detecting bugs, explain what the bug is, why it's a problem, and how to fix it.
+3. Be helpful, concise, and provide actionable solutions.
+4. Always respond in the same language as the user (French if they speak French, English if they speak English).`;
 
     agentConversationHistory.push({ role: 'user', content: message });
 
@@ -1536,48 +1556,87 @@ IMPORTANT CAPABILITIES:
 }
 
 async function processAgentActions(response, codeBlocks) {
-  const createFileMatch = response.match(/(?:create|créer|nouveau)\s+(?:file|fichier|un fichier)\s*[:\s]+([^\n`]+)/i);
+  const agentMessages = document.getElementById('agent-messages');
   
-  if (createFileMatch && codeBlocks.length > 0) {
-    const suggestedFileName = createFileMatch[1].trim().replace(/[`"']/g, '');
+  // Detect file paths from code block comments (e.g., "// filename.js", "<!-- filename.html -->", "/* filename.css */")
+  const filePatterns = [];
+  
+  for (const block of codeBlocks) {
+    const code = block.code;
+    // Check for filename in first line comment
+    const jsComment = code.match(/^\/\/\s*([^\n]+\.(js|ts|jsx|tsx|py|json))/i);
+    const htmlComment = code.match(/^<!--\s*([^\n]+\.(html|htm|xml))\s*-->/i);
+    const cssComment = code.match(/^\/\*\s*([^\n]+\.(css|scss|less))\s*\*\//i);
+    const hashComment = code.match(/^#\s*([^\n]+\.(py|sh|yaml|yml))/i);
     
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'agent-action-prompt';
-    actionDiv.innerHTML = `
-      <p><i class="fas fa-file-plus"></i> Create file: <strong>${suggestedFileName}</strong>?</p>
-      <div class="action-buttons">
-        <button class="btn btn-primary create-file-action" data-filename="${suggestedFileName}">
-          <i class="fas fa-check"></i> Create
-        </button>
-        <button class="btn btn-secondary dismiss-action">
-          <i class="fas fa-times"></i> Dismiss
-        </button>
-      </div>
-    `;
+    let filename = null;
+    if (jsComment) filename = jsComment[1].trim();
+    else if (htmlComment) filename = htmlComment[1].trim();
+    else if (cssComment) filename = cssComment[1].trim();
+    else if (hashComment) filename = hashComment[1].trim();
     
-    const agentMessages = document.getElementById('agent-messages');
-    agentMessages.appendChild(actionDiv);
-    agentMessages.scrollTop = agentMessages.scrollHeight;
-    
-    actionDiv.querySelector('.create-file-action').addEventListener('click', async () => {
-      try {
-        const content = codeBlocks[0].code;
-        await fetch(`/api/file/${currentProject}/${suggestedFileName}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content })
-        });
-        loadFiles();
-        showConsoleOutput(`Created file: ${suggestedFileName}`, 'success');
-        actionDiv.remove();
-      } catch (error) {
-        showConsoleOutput(`Error creating file: ${error.message}`, 'error');
+    if (filename) {
+      // Clean the filename
+      filename = filename.replace(/[`"']/g, '').trim();
+      // Remove path prefixes like "public/" if they exist
+      if (filename.includes('/')) {
+        filename = filename.split('/').pop();
       }
-    });
-    
-    actionDiv.querySelector('.dismiss-action').addEventListener('click', () => {
-      actionDiv.remove();
-    });
+      filePatterns.push({ filename, content: code, language: block.language });
+    }
+  }
+  
+  // Also check for explicit file creation mentions in the response
+  const explicitFileMatch = response.match(/(?:create|créer|crée|voici|here'?s?|file:?)\s*[:\s]*[`"']?([a-zA-Z0-9_\-]+\.(js|ts|jsx|tsx|html|css|py|json|md))[`"']?/gi);
+  
+  if (explicitFileMatch && codeBlocks.length > 0) {
+    for (const match of explicitFileMatch) {
+      const filenameMatch = match.match(/([a-zA-Z0-9_\-]+\.(js|ts|jsx|tsx|html|css|py|json|md))/i);
+      if (filenameMatch) {
+        const filename = filenameMatch[1];
+        // Find matching code block by language or use first one
+        const ext = filename.split('.').pop().toLowerCase();
+        const langMap = { js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript', py: 'python', html: 'html', css: 'css', json: 'json' };
+        const targetLang = langMap[ext] || ext;
+        
+        const matchingBlock = codeBlocks.find(b => b.language === targetLang || b.language === ext) || codeBlocks[0];
+        
+        // Check if not already in filePatterns
+        if (!filePatterns.find(f => f.filename === filename)) {
+          filePatterns.push({ filename, content: matchingBlock.code, language: matchingBlock.language });
+        }
+      }
+    }
+  }
+  
+  // Automatically create detected files
+  for (const file of filePatterns) {
+    try {
+      // Show creating status
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'agent-action-status';
+      statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Creating ${file.filename}...`;
+      agentMessages.appendChild(statusDiv);
+      
+      await fetch(`/api/file/${currentProject}/${file.filename}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: file.content })
+      });
+      
+      statusDiv.innerHTML = `<i class="fas fa-check" style="color: var(--accent-success);"></i> Created: ${file.filename}`;
+      statusDiv.className = 'agent-action-status success';
+      
+      showConsoleOutput(`Created file: ${file.filename}`, 'success');
+    } catch (error) {
+      showConsoleOutput(`Error creating ${file.filename}: ${error.message}`, 'error');
+    }
+  }
+  
+  // Refresh file tree if any files were created
+  if (filePatterns.length > 0) {
+    await loadFiles();
+    agentMessages.scrollTop = agentMessages.scrollHeight;
   }
 }
 
