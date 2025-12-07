@@ -542,6 +542,121 @@ function setupDropdownMenus() {
   });
 }
 
+function setupShellPanel() {
+  const shellPanel = document.getElementById('shell-panel');
+  const shellBack = document.getElementById('shell-back');
+  const shellInput = document.getElementById('shell-input');
+  const shellSend = document.getElementById('shell-send');
+  const shellOutput = document.getElementById('shell-output');
+  const shellClear = document.getElementById('shell-clear');
+  const shellCloseTerminal = document.getElementById('shell-close-terminal');
+  const shellTerminal = document.getElementById('shell-terminal');
+  
+  let commandHistory = [];
+  let historyIndex = -1;
+
+  function openShell() {
+    shellPanel.classList.add('active');
+    shellInput.focus();
+  }
+
+  function closeShell() {
+    shellPanel.classList.remove('active');
+  }
+
+  shellBack.addEventListener('click', closeShell);
+  shellCloseTerminal.addEventListener('click', closeShell);
+
+  shellClear.addEventListener('click', () => {
+    shellOutput.innerHTML = `
+      <div class="shell-welcome">
+        <span class="shell-prompt">~/workspace$</span>
+        <span class="shell-cursor"></span>
+      </div>
+    `;
+  });
+
+  async function executeCommand() {
+    const command = shellInput.value.trim();
+    if (!command) return;
+
+    commandHistory.push(command);
+    historyIndex = commandHistory.length;
+
+    const welcomeEl = shellOutput.querySelector('.shell-welcome');
+    if (welcomeEl) welcomeEl.remove();
+
+    const commandLine = document.createElement('div');
+    commandLine.className = 'shell-command-line';
+    commandLine.innerHTML = `
+      <span class="shell-prompt">~/workspace$</span>
+      <span class="shell-command">${escapeHtml(command)}</span>
+    `;
+    shellOutput.appendChild(commandLine);
+
+    shellInput.value = '';
+    shellInput.disabled = true;
+
+    try {
+      const response = await fetch('/api/shell', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command })
+      });
+
+      const data = await response.json();
+
+      if (data.output) {
+        const resultLine = document.createElement('div');
+        resultLine.className = `shell-result ${data.type}`;
+        resultLine.textContent = data.output;
+        shellOutput.appendChild(resultLine);
+      }
+    } catch (error) {
+      const errorLine = document.createElement('div');
+      errorLine.className = 'shell-result error';
+      errorLine.textContent = `Error: ${error.message}`;
+      shellOutput.appendChild(errorLine);
+    }
+
+    shellInput.disabled = false;
+    shellInput.focus();
+    shellTerminal.scrollTop = shellTerminal.scrollHeight;
+  }
+
+  shellSend.addEventListener('click', executeCommand);
+
+  shellInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      executeCommand();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        historyIndex--;
+        shellInput.value = commandHistory[historyIndex];
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex < commandHistory.length - 1) {
+        historyIndex++;
+        shellInput.value = commandHistory[historyIndex];
+      } else {
+        historyIndex = commandHistory.length;
+        shellInput.value = '';
+      }
+    }
+  });
+
+  document.querySelectorAll('.new-tab-item').forEach(item => {
+    const title = item.querySelector('.new-tab-item-title')?.textContent;
+    if (title === 'Shell') {
+      item.dataset.action = 'shell';
+    }
+  });
+
+  window.openShell = openShell;
+}
+
 function setupNewTabPanel() {
   const newTabPanel = document.getElementById('new-tab-panel');
   const newTabBtn = document.getElementById('new-tab-btn');
@@ -574,6 +689,8 @@ function setupNewTabPanel() {
         } else {
           switchToPanel('preview');
         }
+      } else if (action === 'shell') {
+        if (window.openShell) window.openShell();
       }
     });
   });
@@ -697,6 +814,7 @@ function setupEventListeners() {
   setupDropdownMenus();
   setupMobileNavigation();
   setupNewTabPanel();
+  setupShellPanel();
   
   document.getElementById('project-select').addEventListener('change', (e) => {
     currentProject = e.target.value;

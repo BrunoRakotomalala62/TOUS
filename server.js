@@ -250,6 +250,45 @@ app.post('/api/run', (req, res) => {
   });
 });
 
+app.post('/api/shell', (req, res) => {
+  const { command } = req.body;
+  
+  if (!command || command.trim() === '') {
+    return res.json({ output: '', type: 'empty' });
+  }
+
+  const dangerousCommands = ['rm -rf /', 'mkfs', 'dd if=', ':(){:|:&};:'];
+  for (const dangerous of dangerousCommands) {
+    if (command.includes(dangerous)) {
+      return res.json({ 
+        output: 'This command is not allowed for security reasons.', 
+        type: 'error' 
+      });
+    }
+  }
+
+  exec(command, { 
+    timeout: 30000, 
+    maxBuffer: 1024 * 1024 * 5,
+    cwd: projectsDir
+  }, (error, stdout, stderr) => {
+    if (error) {
+      if (error.killed) {
+        res.json({ output: 'Command timed out (30 second limit)', type: 'error' });
+      } else {
+        res.json({ output: stderr || error.message, type: 'error' });
+      }
+      return;
+    }
+    
+    const output = stdout || stderr || '';
+    res.json({ 
+      output: output, 
+      type: output ? 'success' : 'empty'
+    });
+  });
+});
+
 app.post('/api/create-project', (req, res) => {
   try {
     const { name } = req.body;

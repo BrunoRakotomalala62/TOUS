@@ -1185,6 +1185,222 @@ body {
   color: white;
 }
 
+.shell-panel {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: 500;
+  flex-direction: column;
+}
+
+.shell-panel.active {
+  display: flex;
+}
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shell-back,
+.shell-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.shell-back:hover,
+.shell-menu:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.shell-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.shell-title i {
+  color: #ef4444;
+}
+
+.shell-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shell-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.shell-path i {
+  font-size: 0.7rem;
+}
+
+.shell-type {
+  color: var(--text-muted);
+}
+
+.shell-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.shell-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.shell-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.shell-terminal {
+  flex: 1;
+  overflow-y: auto;
+  background: #000;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.shell-output {
+  color: #e6edf3;
+}
+
+.shell-welcome {
+  display: flex;
+  align-items: center;
+}
+
+.shell-prompt {
+  color: #58a6ff;
+  margin-right: 8px;
+}
+
+.shell-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: #58a6ff;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.shell-command-line {
+  margin-bottom: 8px;
+}
+
+.shell-command {
+  color: #e6edf3;
+}
+
+.shell-result {
+  color: #8b949e;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.shell-result.error {
+  color: #f85149;
+}
+
+.shell-result.success {
+  color: #3fb950;
+}
+
+.shell-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.shell-input-prompt {
+  color: #58a6ff;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.shell-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: #000;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.shell-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.shell-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shell-send:hover {
+  background: #4a9aef;
+}
+
 .new-tab-panel {
   display: none;
   position: fixed;
