@@ -444,6 +444,7 @@ async function runCode() {
   // Check if a file is selected
   if (!currentFile || currentFile === 'welcome') {
     showConsoleOutput('Please open a file first! Click on a file in the FILES panel (index.html, main.js, etc.)', 'warning');
+    switchToPanel('console');
     return;
   }
   
@@ -453,6 +454,7 @@ async function runCode() {
   // Check if language is supported
   if (!language || language === 'plaintext') {
     showConsoleOutput(`File type not supported for execution. Supported: .js, .py, .html`, 'warning');
+    switchToPanel('console');
     return;
   }
   
@@ -473,9 +475,11 @@ async function runCode() {
       showConsoleOutput('HTML preview updated', 'success');
     } else {
       showConsoleOutput(data.output, data.type);
+      switchToPanel('console');
     }
   } catch (error) {
     showConsoleOutput(`Error: ${error.message}`, 'error');
+    switchToPanel('console');
   }
 }
 
