@@ -881,6 +881,12 @@ function setupModalListeners() {
     document.getElementById('new-folder-name').focus();
   });
   
+  document.getElementById('upload-file-btn').addEventListener('click', () => {
+    document.getElementById('file-upload-input').click();
+  });
+  
+  document.getElementById('file-upload-input').addEventListener('change', handleFileUpload);
+  
   document.getElementById('new-project-btn').addEventListener('click', () => {
     document.getElementById('new-project-modal').classList.add('active');
     document.getElementById('new-project-name').focus();
@@ -989,6 +995,43 @@ async function createNewProject() {
   } catch (error) {
     showConsoleOutput(`Error: ${error.message}`, 'error');
   }
+}
+
+async function handleFileUpload(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+  
+  for (const file of files) {
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const content = event.target.result;
+        
+        try {
+          const response = await fetch(`/api/file/${currentProject}/${file.name}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            loadFiles();
+            showConsoleOutput(`Uploaded: ${file.name}`, 'success');
+          } else {
+            showConsoleOutput(`Error uploading ${file.name}: ${data.error}`, 'error');
+          }
+        } catch (error) {
+          showConsoleOutput(`Error uploading ${file.name}: ${error.message}`, 'error');
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      showConsoleOutput(`Error reading ${file.name}: ${error.message}`, 'error');
+    }
+  }
+  
+  e.target.value = '';
 }
 
 function showContextMenu(e, item) {

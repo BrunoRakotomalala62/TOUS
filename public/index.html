@@ -156,12 +156,6 @@
         <div class="sidebar-header">
           <span>Files</span>
           <div class="sidebar-actions">
-            <button id="new-file-btn" class="icon-btn" title="New File">
-              <i class="fas fa-file-plus"></i>
-            </button>
-            <button id="new-folder-btn" class="icon-btn" title="New Folder">
-              <i class="fas fa-folder-plus"></i>
-            </button>
             <button id="toggle-sidebar" class="icon-btn" title="Toggle Sidebar">
               <i class="fas fa-chevron-left"></i>
             </button>
@@ -170,6 +164,21 @@
         <div class="file-tree" id="file-tree">
           <div class="loading">Loading files...</div>
         </div>
+        <div class="sidebar-footer">
+          <button id="new-file-btn" class="sidebar-action-btn">
+            <i class="fas fa-file-plus"></i>
+            <span>New file</span>
+          </button>
+          <button id="new-folder-btn" class="sidebar-action-btn">
+            <i class="fas fa-folder-plus"></i>
+            <span>New folder</span>
+          </button>
+          <button id="upload-file-btn" class="sidebar-action-btn">
+            <i class="fas fa-upload"></i>
+            <span>Upload files</span>
+          </button>
+        </div>
+        <input type="file" id="file-upload-input" multiple style="display: none;">
       </aside>
 
       <div class="editor-area">
