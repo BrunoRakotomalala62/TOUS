@@ -255,7 +255,44 @@
         <i class="fas fa-eye"></i>
         <span>Preview</span>
       </button>
+      <button class="mobile-nav-item" data-view="tools">
+        <i class="fas fa-columns"></i>
+        <span>Tools</span>
+      </button>
     </nav>
+    
+    <div class="tools-panel" id="tools-panel">
+      <div class="tools-grid">
+        <button class="tool-btn">
+          <i class="fas fa-lock"></i>
+          <span>Secrets</span>
+        </button>
+        <button class="tool-btn">
+          <i class="fas fa-database"></i>
+          <span>Database</span>
+        </button>
+        <button class="tool-btn">
+          <i class="fas fa-user-shield"></i>
+          <span>Auth</span>
+        </button>
+        <button class="tool-btn" id="new-tab-btn">
+          <i class="fas fa-plus"></i>
+          <span>New Tab</span>
+        </button>
+      </div>
+      <div class="tools-search">
+        <button class="tools-new-file">
+          <i class="far fa-file"></i>
+        </button>
+        <div class="search-input-wrapper">
+          <input type="text" placeholder="Search..." id="tools-search-input">
+          <i class="fas fa-search"></i>
+        </div>
+        <button class="tools-close" id="tools-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
     
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
   </div>

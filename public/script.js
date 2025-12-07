@@ -519,6 +519,8 @@ function setupMobileNavigation() {
   const editorWrapper = document.querySelector('.editor-wrapper');
   const tabsContainer = document.querySelector('.tabs-container');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
+  const toolsPanel = document.getElementById('tools-panel');
+  const toolsClose = document.getElementById('tools-close');
   
   function isMobile() {
     return window.innerWidth <= 768;
@@ -536,6 +538,7 @@ function setupMobileNavigation() {
     sidebarOverlay.classList.remove('active');
     rightPanel.classList.remove('mobile-active');
     editorWrapper.classList.remove('mobile-active');
+    toolsPanel.classList.remove('active');
     if (tabsContainer) tabsContainer.style.display = 'none';
 
     document.querySelectorAll('.console-panel, .preview-panel').forEach(p => p.classList.remove('active'));
@@ -558,6 +561,12 @@ function setupMobileNavigation() {
         rightPanel.classList.add('mobile-active');
         document.getElementById('preview-panel').classList.add('active');
         break;
+      case 'tools':
+        toolsPanel.classList.add('active');
+        editorWrapper.classList.add('mobile-active');
+        if (tabsContainer) tabsContainer.style.display = 'block';
+        if (editor) editor.layout();
+        break;
     }
   }
 
@@ -565,6 +574,11 @@ function setupMobileNavigation() {
     item.addEventListener('click', () => {
       switchMobileView(item.dataset.view);
     });
+  });
+
+  toolsClose.addEventListener('click', () => {
+    toolsPanel.classList.remove('active');
+    switchMobileView('editor');
   });
 
   sidebarOverlay.addEventListener('click', () => {
@@ -581,6 +595,7 @@ function setupMobileNavigation() {
       sidebarOverlay.classList.remove('active');
       rightPanel.classList.remove('mobile-active');
       editorWrapper.classList.remove('mobile-active');
+      toolsPanel.classList.remove('active');
       if (tabsContainer) tabsContainer.style.display = '';
       document.getElementById('console-panel').classList.add('active');
       document.getElementById('preview-panel').classList.remove('active');
