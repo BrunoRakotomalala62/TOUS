@@ -225,6 +225,7 @@ async function openFile(path) {
   
   if (openTabs.has(path)) {
     switchToTab(path);
+    switchToEditorOnMobile();
     return;
   }
   
@@ -238,9 +239,38 @@ async function openFile(path) {
     
     setEditorContent(data.content, path);
     updateStatus(path);
+    switchToEditorOnMobile();
   } catch (error) {
     console.error('Failed to open file:', error);
     showConsoleOutput(`Error opening file: ${error.message}`, 'error');
+  }
+}
+
+function switchToEditorOnMobile() {
+  if (window.innerWidth <= 768) {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const editorWrapper = document.querySelector('.editor-wrapper');
+    const tabsContainer = document.querySelector('.tabs-container');
+    const rightPanel = document.getElementById('right-panel');
+    const toolsPanel = document.getElementById('tools-panel');
+    
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    document.querySelector('.mobile-nav-item[data-view="editor"]')?.classList.add('active');
+    
+    sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
+    rightPanel.classList.remove('mobile-active');
+    toolsPanel.classList.remove('active');
+    
+    editorWrapper.classList.add('mobile-active');
+    if (tabsContainer) tabsContainer.style.display = 'block';
+    
+    if (editor) {
+      setTimeout(() => editor.layout(), 100);
+    }
   }
 }
 
