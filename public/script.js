@@ -1280,6 +1280,7 @@ async function handleContextAction(action, path, type) {
 }
 
 let agentConversationId = null;
+let agentConversationHistory = [];
 
 function setupAgentPanel() {
   const agentPanel = document.getElementById('agent-panel');
@@ -1297,8 +1298,8 @@ function setupAgentPanel() {
         <div class="agent-welcome-icon">
           <i class="fas fa-robot"></i>
         </div>
-        <h3>AI Coding Assistant</h3>
-        <p>I can help you with:</p>
+        <h3>AI Coding Assistant (Claude 3.7)</h3>
+        <p>Powered by Puter.js - Free & Unlimited</p>
         <div class="agent-capabilities">
           <div class="capability">
             <i class="fas fa-bug"></i>
@@ -1309,8 +1310,8 @@ function setupAgentPanel() {
             <span>Write & edit code</span>
           </div>
           <div class="capability">
-            <i class="fas fa-lightbulb"></i>
-            <span>Explain concepts</span>
+            <i class="fas fa-file-plus"></i>
+            <span>Create files & projects</span>
           </div>
           <div class="capability">
             <i class="fas fa-globe"></i>
@@ -1320,6 +1321,7 @@ function setupAgentPanel() {
       </div>
     `;
     agentConversationId = null;
+    agentConversationHistory = [];
   });
 
   document.querySelectorAll('.agent-tool').forEach(tool => {
@@ -1408,6 +1410,34 @@ function closeAgent() {
   agentPanel.classList.remove('active');
 }
 
+async function getProjectFilesContext() {
+  try {
+    const response = await fetch(`/api/files/${currentProject}`);
+    const data = await response.json();
+    
+    let filesContext = '';
+    async function readFiles(files) {
+      for (const file of files) {
+        if (file.type === 'file') {
+          try {
+            const fileResponse = await fetch(`/api/file/${currentProject}/${file.path}`);
+            const fileData = await fileResponse.json();
+            if (fileData.content && fileData.content.length < 5000) {
+              filesContext += `\n--- ${file.path} ---\n${fileData.content}\n`;
+            }
+          } catch (e) {}
+        } else if (file.children) {
+          await readFiles(file.children);
+        }
+      }
+    }
+    await readFiles(data.files || []);
+    return filesContext;
+  } catch (error) {
+    return '';
+  }
+}
+
 async function sendAgentMessage() {
   const agentInput = document.getElementById('agent-input');
   const agentMessages = document.getElementById('agent-messages');
@@ -1424,35 +1454,130 @@ async function sendAgentMessage() {
 
   const loadingDiv = document.createElement('div');
   loadingDiv.className = 'agent-loading';
-  loadingDiv.innerHTML = '<div class="spinner"></div><span>Thinking...</span>';
+  loadingDiv.innerHTML = '<div class="spinner"></div><span>Claude 3.7 is thinking...</span>';
   agentMessages.appendChild(loadingDiv);
   agentMessages.scrollTop = agentMessages.scrollHeight;
 
   try {
-    const response = await fetch('/api/agent/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message,
-        project: currentProject,
-        conversationId: agentConversationId
-      })
+    const projectFiles = await getProjectFilesContext();
+    
+    const systemPrompt = `You are an intelligent AI coding assistant powered by Claude 3.7 Sonnet. You help developers with:
+- Analyzing and understanding code
+- Detecting bugs and issues
+- Suggesting fixes and improvements  
+- Writing new code and features
+- Explaining code concepts
+- Creating new files and projects
+- Searching the web for documentation
+
+Current project: ${currentProject}
+Project files:
+${projectFiles}
+
+IMPORTANT CAPABILITIES:
+1. When asked to create a file, provide the file content in a code block and specify the filename.
+2. When asked to modify code, provide the complete modified file content.
+3. When detecting bugs, explain what the bug is, why it's a problem, and how to fix it.
+4. Be helpful, concise, and provide actionable solutions.
+5. Format code suggestions with the filename as a comment at the top.`;
+
+    agentConversationHistory.push({ role: 'user', content: message });
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...agentConversationHistory
+    ];
+
+    let fullResponse = '';
+    const response = await puter.ai.chat(messages, {
+      model: 'claude-3-7-sonnet',
+      stream: true
     });
+
+    loadingDiv.innerHTML = '<div class="spinner"></div><span>Generating response...</span>';
+
+    for await (const part of response) {
+      if (part?.text) {
+        fullResponse += part.text;
+      }
+    }
 
     loadingDiv.remove();
 
-    const data = await response.json();
-    
-    if (data.error) {
-      appendAgentMessage('assistant', `Error: ${data.error}`);
+    if (!fullResponse) {
+      appendAgentMessage('assistant', 'No response received. Please try again.');
       return;
     }
 
-    agentConversationId = data.conversationId;
-    appendAgentMessage('assistant', data.response, data.codeBlocks);
+    agentConversationHistory.push({ role: 'assistant', content: fullResponse });
+    
+    if (agentConversationHistory.length > 20) {
+      agentConversationHistory = agentConversationHistory.slice(-20);
+    }
+
+    const codeBlocks = [];
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    let match;
+    while ((match = codeBlockRegex.exec(fullResponse)) !== null) {
+      codeBlocks.push({
+        language: match[1] || 'text',
+        code: match[2].trim()
+      });
+    }
+
+    appendAgentMessage('assistant', fullResponse, codeBlocks);
+    
+    await processAgentActions(fullResponse, codeBlocks);
+    
   } catch (error) {
     loadingDiv.remove();
-    appendAgentMessage('assistant', `Error: ${error.message}`);
+    appendAgentMessage('assistant', `Error: ${error.message}. Please make sure Puter.js is loaded and try again.`);
+  }
+}
+
+async function processAgentActions(response, codeBlocks) {
+  const createFileMatch = response.match(/(?:create|créer|nouveau)\s+(?:file|fichier|un fichier)\s*[:\s]+([^\n`]+)/i);
+  
+  if (createFileMatch && codeBlocks.length > 0) {
+    const suggestedFileName = createFileMatch[1].trim().replace(/[`"']/g, '');
+    
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'agent-action-prompt';
+    actionDiv.innerHTML = `
+      <p><i class="fas fa-file-plus"></i> Create file: <strong>${suggestedFileName}</strong>?</p>
+      <div class="action-buttons">
+        <button class="btn btn-primary create-file-action" data-filename="${suggestedFileName}">
+          <i class="fas fa-check"></i> Create
+        </button>
+        <button class="btn btn-secondary dismiss-action">
+          <i class="fas fa-times"></i> Dismiss
+        </button>
+      </div>
+    `;
+    
+    const agentMessages = document.getElementById('agent-messages');
+    agentMessages.appendChild(actionDiv);
+    agentMessages.scrollTop = agentMessages.scrollHeight;
+    
+    actionDiv.querySelector('.create-file-action').addEventListener('click', async () => {
+      try {
+        const content = codeBlocks[0].code;
+        await fetch(`/api/file/${currentProject}/${suggestedFileName}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        loadFiles();
+        showConsoleOutput(`Created file: ${suggestedFileName}`, 'success');
+        actionDiv.remove();
+      } catch (error) {
+        showConsoleOutput(`Error creating file: ${error.message}`, 'error');
+      }
+    });
+    
+    actionDiv.querySelector('.dismiss-action').addEventListener('click', () => {
+      actionDiv.remove();
+    });
   }
 }
 
@@ -1516,23 +1641,66 @@ async function analyzeCode(type) {
   const code = editor.getValue();
   const language = getLanguageFromPath(currentFile);
 
-  analyzeResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Analyzing code...</span></div>';
+  analyzeResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Claude 3.7 analyzing code...</span></div>';
 
   try {
-    const response = await fetch('/api/agent/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, language, type })
-    });
+    let prompt;
+    switch (type) {
+      case 'bugs':
+        prompt = `Analyze this ${language} code for bugs and issues. List each bug with:
+1. Line number or location
+2. Description of the bug
+3. Why it's a problem
+4. How to fix it
 
-    const data = await response.json();
-    
-    if (data.error) {
-      analyzeResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
-      return;
+Code:
+\`\`\`${language}
+${code}
+\`\`\``;
+        break;
+      case 'optimize':
+        prompt = `Analyze this ${language} code and suggest optimizations for:
+1. Performance improvements
+2. Code readability
+3. Best practices
+4. Memory efficiency
+
+Provide the optimized code with explanations.
+
+Code:
+\`\`\`${language}
+${code}
+\`\`\``;
+        break;
+      case 'explain':
+        prompt = `Explain this ${language} code in detail:
+1. What does it do?
+2. How does it work step by step?
+3. What are the key concepts used?
+4. Are there any potential issues?
+
+Code:
+\`\`\`${language}
+${code}
+\`\`\``;
+        break;
+      default:
+        prompt = `Analyze this ${language} code and provide insights:\n\`\`\`${language}\n${code}\n\`\`\``;
     }
 
-    let formattedAnalysis = escapeHtml(data.analysis)
+    let fullResponse = '';
+    const response = await puter.ai.chat(prompt, {
+      model: 'claude-3-7-sonnet',
+      stream: true
+    });
+
+    for await (const part of response) {
+      if (part?.text) {
+        fullResponse += part.text;
+      }
+    }
+
+    let formattedAnalysis = escapeHtml(fullResponse)
       .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
         return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
       })
@@ -1556,37 +1724,55 @@ async function generateCode() {
     return;
   }
 
-  generateResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Generating code...</span></div>';
+  generateResult.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Claude 3.7 generating code...</span></div>';
 
   try {
-    const response = await fetch('/api/agent/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        prompt, 
-        language,
-        context: currentFile ? editor?.getValue() : null
-      })
+    const context = currentFile ? editor?.getValue() : null;
+    const systemPrompt = `You are an expert ${language} developer. Generate clean, well-commented, production-ready code.
+${context ? `Context:\n${context}` : ''}
+Provide only the code without explanations unless asked. Wrap the code in a code block.`;
+
+    let fullResponse = '';
+    const response = await puter.ai.chat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: prompt }
+    ], {
+      model: 'claude-3-7-sonnet',
+      stream: true
     });
 
-    const data = await response.json();
-    
-    if (data.error) {
-      generateResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
-      return;
+    for await (const part of response) {
+      if (part?.text) {
+        fullResponse += part.text;
+      }
     }
+    
+    const codeMatch = fullResponse.match(/```\w*\n([\s\S]*?)```/);
+    const cleanCode = codeMatch ? codeMatch[1].trim() : fullResponse;
 
     generateResult.innerHTML = `
-      <pre><code>${escapeHtml(data.code)}</code></pre>
+      <pre><code>${escapeHtml(cleanCode)}</code></pre>
       <div class="code-block-actions">
-        <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${data.code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`); showConsoleOutput('Code copied!', 'success');">
+        <button class="copy-btn gen-copy-btn">
           <i class="fas fa-copy"></i> Copy
         </button>
-        <button class="apply-btn" onclick="if(editor) { editor.setValue(\`${data.code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`); showConsoleOutput('Code applied!', 'success'); }">
+        <button class="apply-btn gen-apply-btn">
           <i class="fas fa-check"></i> Apply to Editor
         </button>
       </div>
     `;
+    
+    generateResult.querySelector('.gen-copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(cleanCode);
+      showConsoleOutput('Code copied!', 'success');
+    });
+    
+    generateResult.querySelector('.gen-apply-btn').addEventListener('click', () => {
+      if (editor) {
+        editor.setValue(cleanCode);
+        showConsoleOutput('Code applied!', 'success');
+      }
+    });
   } catch (error) {
     generateResult.innerHTML = `<p style="color: var(--accent-error);">Error: ${error.message}</p>`;
   }
@@ -1601,44 +1787,49 @@ async function performWebSearch() {
     return;
   }
 
-  searchResults.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Searching the web...</span></div>';
+  searchResults.innerHTML = '<div class="agent-loading"><div class="spinner"></div><span>Searching with AI...</span></div>';
 
   try {
-    const response = await fetch('/api/agent/smart-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        query,
-        context: currentFile ? editor?.getValue()?.substring(0, 2000) : null
-      })
+    const context = currentFile ? editor?.getValue()?.substring(0, 2000) : null;
+    
+    const searchPrompt = `You are a helpful coding assistant. Answer the following programming question with detailed, accurate information. If it's about a library or framework, provide code examples.
+
+Question: ${query}
+
+${context ? `Current code context:\n\`\`\`\n${context}\n\`\`\`` : ''}
+
+Provide a comprehensive answer with:
+1. A clear explanation
+2. Code examples if applicable
+3. Best practices and tips
+4. Common pitfalls to avoid`;
+
+    let fullResponse = '';
+    const response = await puter.ai.chat(searchPrompt, {
+      model: 'claude-3-7-sonnet',
+      stream: true
     });
 
-    const data = await response.json();
-    
-    if (data.error) {
-      searchResults.innerHTML = `<p style="color: var(--accent-error);">Error: ${data.error}</p>`;
-      return;
+    for await (const part of response) {
+      if (part?.text) {
+        fullResponse += part.text;
+      }
     }
+
+    let formattedResponse = escapeHtml(fullResponse)
+      .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+      })
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
 
     let resultsHtml = `
       <div class="search-answer">
-        <h4>AI Summary</h4>
-        <p>${escapeHtml(data.response).replace(/\n/g, '<br>')}</p>
+        <h4><i class="fas fa-robot"></i> AI Answer (Claude 3.7)</h4>
+        <div class="ai-response">${formattedResponse}</div>
       </div>
     `;
-
-    if (data.sources && data.sources.length > 0) {
-      resultsHtml += '<h4 style="margin: 20px 0 12px;">Sources</h4>';
-      data.sources.forEach(source => {
-        resultsHtml += `
-          <div class="search-result-item">
-            <h5>${escapeHtml(source.title)}</h5>
-            <p>${escapeHtml(source.snippet)}</p>
-            <a href="${source.url}" target="_blank">${source.url}</a>
-          </div>
-        `;
-      });
-    }
 
     searchResults.innerHTML = resultsHtml;
   } catch (error) {

@@ -1,7 +1,7 @@
 # CodeEditor - Online IDE
 
 ## Overview
-A dynamic code editor platform similar to Replit, built with Node.js, Express, and Monaco Editor. Features a dark theme interface with file management, code execution, and live preview capabilities.
+A dynamic code editor platform similar to Replit, built with Node.js, Express, and Monaco Editor. Features a dark theme interface with file management, code execution, live preview capabilities, and an AI coding assistant powered by Puter.js (Claude 3.7 Sonnet - free and unlimited).
 
 ## Project Structure
 ```
@@ -40,6 +40,12 @@ A dynamic code editor platform similar to Replit, built with Node.js, Express, a
 - `POST /api/create-project` - Create new project
 
 ## Recent Changes
+- **December 7, 2025**: Added Puter.js AI Integration
+  - Integrated Puter.js for free, unlimited Claude 3.7 Sonnet AI
+  - AI agent can now modify code, create files/projects, detect bugs, and answer coding questions
+  - No API key required - uses Puter.js "User-Pays" model
+  - Streaming responses for real-time AI feedback
+  
 - **December 7, 2025**: Initial build
   - Created full IDE interface with Monaco editor
   - Implemented file management system

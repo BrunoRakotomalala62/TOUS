@@ -2378,3 +2378,51 @@ body {
     padding: 10px;
   }
 }
+
+.agent-action-prompt {
+  background: linear-gradient(135deg, rgba(163, 113, 247, 0.1), rgba(88, 166, 255, 0.1));
+  border: 1px solid var(--accent-purple);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.agent-action-prompt p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.agent-action-prompt .action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.agent-action-prompt .action-buttons button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-response {
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.ai-response pre {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.ai-response code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
