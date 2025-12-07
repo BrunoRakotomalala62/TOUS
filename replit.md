@@ -40,6 +40,15 @@ A dynamic code editor platform similar to Replit, built with Node.js, Express, a
 - `POST /api/create-project` - Create new project
 
 ## Recent Changes
+- **December 8, 2025**: Dynamic Run Button
+  - Run button now works without selecting a file first
+  - Automatically detects the main entry file (index.html, main.js, main.py)
+  - Assembles HTML with linked CSS and JS files for complete preview
+  - Always displays the webview/preview panel after running
+  - JavaScript console output is captured and displayed in the preview
+  - Python output is executed and shown in the preview
+  - Added robust security validation against path traversal attacks
+  
 - **December 8, 2025**: Automatic File Creation
   - AI now automatically creates files in your project when it generates code
   - Files are detected by filename comments at the top of code blocks (e.g., `// app.js`)
