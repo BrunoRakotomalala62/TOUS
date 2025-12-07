@@ -1,14 +1,136 @@
+<!-- public/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Project</title>
+  <title>Site Web Magnifique</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <h1>Hello World!</h1>
-  <p>Welcome to my project.</p>
-  <script src="main.js"></script>
+  <header>
+    <nav>
+      <div class="logo">MagnifiqueSite</div>
+      <ul class="nav-links">
+        <li><a href="#accueil">Accueil</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <div class="burger">
+        <div class="line1"></div>
+        <div class="line2"></div>
+        <div class="line3"></div>
+      </div>
+    </nav>
+  </header>
+
+  <section id="accueil" class="hero">
+    <div class="hero-content">
+      <h1>Bienvenue sur notre Site Magnifique</h1>
+      <p>Nous créons des expériences web exceptionnelles</p>
+      <button class="cta-button">En savoir plus</button>
+    </div>
+  </section>
+
+  <section id="services" class="services">
+    <h2>Nos Services</h2>
+    <div class="services-container">
+      <div class="service-card">
+        <i class="fas fa-laptop-code"></i>
+        <h3>Développement Web</h3>
+        <p>Sites web modernes et réactifs avec les dernières technologies.</p>
+      </div>
+      <div class="service-card">
+        <i class="fas fa-mobile-alt"></i>
+        <h3>Design Responsive</h3>
+        <p>Interfaces adaptées à tous les appareils pour une expérience optimale.</p>
+      </div>
+      <div class="service-card">
+        <i class="fas fa-search"></i>
+        <h3>SEO</h3>
+        <p>Optimisation pour les moteurs de recherche pour améliorer votre visibilité.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="portfolio" class="portfolio">
+    <h2>Notre Portfolio</h2>
+    <div class="portfolio-container">
+      <div class="portfolio-item">
+        <img src="https://source.unsplash.com/random/600x400?website" alt="Projet 1">
+        <div class="overlay">
+          <h3>Projet E-commerce</h3>
+          <p>Design et développement</p>
+        </div>
+      </div>
+      <div class="portfolio-item">
+        <img src="https://source.unsplash.com/random/600x400?app" alt="Projet 2">
+        <div class="overlay">
+          <h3>Application Mobile</h3>
+          <p>UI/UX et développement</p>
+        </div>
+      </div>
+      <div class="portfolio-item">
+        <img src="https://source.unsplash.com/random/600x400?design" alt="Projet 3">
+        <div class="overlay">
+          <h3>Refonte de Site</h3>
+          <p>Modernisation et optimisation</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <h2>Contactez-nous</h2>
+    <form id="contact-form">
+      <div class="form-group">
+        <input type="text" id="name" placeholder="Votre nom" required>
+      </div>
+      <div class="form-group">
+        <input type="email" id="email" placeholder="Votre email" required>
+      </div>
+      <div class="form-group">
+        <textarea id="message" placeholder="Votre message" required></textarea>
+      </div>
+      <button type="submit" class="submit-button">Envoyer</button>
+    </form>
+  </section>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>MagnifiqueSite</h3>
+        <p>Création de sites web exceptionnels pour des clients exceptionnels.</p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-facebook"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+        </div>
+      </div>
+      <div class="footer-section">
+        <h3>Liens Rapides</h3>
+        <ul>
+          <li><a href="#accueil">Accueil</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#portfolio">Portfolio</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h3>Contact</h3>
+        <p><i class="fas fa-map-marker-alt"></i> 123 Rue de l'Innovation, Paris</p>
+        <p><i class="fas fa-phone"></i> +33 1 23 45 67 89</p>
+        <p><i class="fas fa-envelope"></i> contact@magnifiquesite.fr</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2023 MagnifiqueSite. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>

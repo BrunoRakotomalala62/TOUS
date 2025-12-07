@@ -332,6 +332,10 @@ body {
   gap: 6px;
   padding: 8px 16px;
   border: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
