@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeEditor - Online IDE</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="top-bar">
+      <div class="logo">
+        <i class="fas fa-code"></i>
+        <span>CodeEditor</span>
+      </div>
+      <div class="project-info">
+        <select id="project-select" class="project-selector">
+          <option value="">Loading projects...</option>
+        </select>
+        <button id="new-project-btn" class="btn btn-primary">
+          <i class="fas fa-plus"></i> New Project
+        </button>
+      </div>
+      <div class="top-actions">
+        <button id="run-btn" class="btn btn-success">
+          <i class="fas fa-play"></i> Run
+        </button>
+        <button id="save-btn" class="btn btn-secondary">
+          <i class="fas fa-save"></i> Save
+        </button>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span>Files</span>
+          <div class="sidebar-actions">
+            <button id="new-file-btn" class="icon-btn" title="New File">
+              <i class="fas fa-file-plus"></i>
+            </button>
+            <button id="new-folder-btn" class="icon-btn" title="New Folder">
+              <i class="fas fa-folder-plus"></i>
+            </button>
+            <button id="toggle-sidebar" class="icon-btn" title="Toggle Sidebar">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </div>
+        </div>
+        <div class="file-tree" id="file-tree">
+          <div class="loading">Loading files...</div>
+        </div>
+      </aside>
+
+      <div class="editor-area">
+        <div class="tabs-container" id="tabs-container">
+          <div class="tabs" id="tabs">
+            <div class="tab active" data-path="welcome">
+              <span>Welcome</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="editor-wrapper">
+          <div id="editor-container"></div>
+        </div>
+      </div>
+
+      <aside class="right-panel" id="right-panel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-panel="console">
+            <i class="fas fa-terminal"></i> Console
+          </button>
+          <button class="panel-tab" data-panel="preview">
+            <i class="fas fa-eye"></i> Preview
+          </button>
+        </div>
+        
+        <div class="panel-content">
+          <div class="console-panel active" id="console-panel">
+            <div class="console-header">
+              <span>Output</span>
+              <button id="clear-console" class="icon-btn" title="Clear Console">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+            <div class="console-output" id="console-output">
+              <div class="console-welcome">
+                <i class="fas fa-terminal"></i>
+                <p>Click "Run" to execute your code</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="preview-panel" id="preview-panel">
+            <div class="preview-header">
+              <span>Preview</span>
+              <button id="refresh-preview" class="icon-btn" title="Refresh Preview">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="status-bar">
+      <div class="status-left">
+        <span id="file-status">Ready</span>
+        <span class="separator">|</span>
+        <span id="language-status">JavaScript</span>
+      </div>
+      <div class="status-right">
+        <span id="cursor-position">Ln 1, Col 1</span>
+        <span class="separator">|</span>
+        <span>UTF-8</span>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal" id="new-file-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New File</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="new-file-name" placeholder="Enter file name (e.g., script.js)">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal">Cancel</button>
+        <button class="btn btn-primary" id="create-file-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="new-folder-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Folder</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="new-folder-name" placeholder="Enter folder name">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal">Cancel</button>
+        <button class="btn btn-primary" id="create-folder-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="new-project-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Project</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="new-project-name" placeholder="Enter project name">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary close-modal">Cancel</button>
+        <button class="btn btn-primary" id="create-project-btn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
