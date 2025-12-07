@@ -327,20 +327,14 @@
           </button>
         </div>
       </div>
-      <div class="shell-terminal" id="shell-terminal">
+      <div class="shell-terminal" id="shell-terminal" tabindex="0">
         <div class="shell-output" id="shell-output">
-          <div class="shell-welcome">
-            <span class="shell-prompt">~/workspace$</span>
-            <span class="shell-cursor"></span>
-          </div>
         </div>
-      </div>
-      <div class="shell-input-container">
-        <span class="shell-input-prompt">~/workspace$</span>
-        <input type="text" class="shell-input" id="shell-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
-        <button class="shell-send" id="shell-send">
-          <i class="fas fa-paper-plane"></i>
-        </button>
+        <div class="shell-input-line" id="shell-input-line">
+          <span class="shell-prompt">~/workspace$</span>
+          <span class="shell-current-input" id="shell-current-input"></span>
+          <span class="shell-cursor"></span>
+        </div>
       </div>
     </div>
     

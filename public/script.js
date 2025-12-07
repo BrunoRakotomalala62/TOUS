@@ -545,19 +545,20 @@ function setupDropdownMenus() {
 function setupShellPanel() {
   const shellPanel = document.getElementById('shell-panel');
   const shellBack = document.getElementById('shell-back');
-  const shellInput = document.getElementById('shell-input');
-  const shellSend = document.getElementById('shell-send');
   const shellOutput = document.getElementById('shell-output');
   const shellClear = document.getElementById('shell-clear');
   const shellCloseTerminal = document.getElementById('shell-close-terminal');
   const shellTerminal = document.getElementById('shell-terminal');
+  const shellCurrentInput = document.getElementById('shell-current-input');
   
   let commandHistory = [];
   let historyIndex = -1;
+  let currentCommand = '';
+  let isExecuting = false;
 
   function openShell() {
     shellPanel.classList.add('active');
-    shellInput.focus();
+    shellTerminal.focus();
   }
 
   function closeShell() {
@@ -568,23 +569,22 @@ function setupShellPanel() {
   shellCloseTerminal.addEventListener('click', closeShell);
 
   shellClear.addEventListener('click', () => {
-    shellOutput.innerHTML = `
-      <div class="shell-welcome">
-        <span class="shell-prompt">~/workspace$</span>
-        <span class="shell-cursor"></span>
-      </div>
-    `;
+    shellOutput.innerHTML = '';
+    currentCommand = '';
+    shellCurrentInput.textContent = '';
+  });
+
+  shellTerminal.addEventListener('click', () => {
+    shellTerminal.focus();
   });
 
   async function executeCommand() {
-    const command = shellInput.value.trim();
-    if (!command) return;
+    const command = currentCommand.trim();
+    if (!command || isExecuting) return;
 
+    isExecuting = true;
     commandHistory.push(command);
     historyIndex = commandHistory.length;
-
-    const welcomeEl = shellOutput.querySelector('.shell-welcome');
-    if (welcomeEl) welcomeEl.remove();
 
     const commandLine = document.createElement('div');
     commandLine.className = 'shell-command-line';
@@ -594,8 +594,8 @@ function setupShellPanel() {
     `;
     shellOutput.appendChild(commandLine);
 
-    shellInput.value = '';
-    shellInput.disabled = true;
+    currentCommand = '';
+    shellCurrentInput.textContent = '';
 
     try {
       const response = await fetch('/api/shell', {
@@ -619,32 +619,49 @@ function setupShellPanel() {
       shellOutput.appendChild(errorLine);
     }
 
-    shellInput.disabled = false;
-    shellInput.focus();
+    isExecuting = false;
     shellTerminal.scrollTop = shellTerminal.scrollHeight;
   }
 
-  shellSend.addEventListener('click', executeCommand);
+  shellTerminal.addEventListener('keydown', (e) => {
+    if (isExecuting) return;
 
-  shellInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       executeCommand();
+    } else if (e.key === 'Backspace') {
+      e.preventDefault();
+      currentCommand = currentCommand.slice(0, -1);
+      shellCurrentInput.textContent = currentCommand;
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (historyIndex > 0) {
         historyIndex--;
-        shellInput.value = commandHistory[historyIndex];
+        currentCommand = commandHistory[historyIndex];
+        shellCurrentInput.textContent = currentCommand;
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (historyIndex < commandHistory.length - 1) {
         historyIndex++;
-        shellInput.value = commandHistory[historyIndex];
+        currentCommand = commandHistory[historyIndex];
+        shellCurrentInput.textContent = currentCommand;
       } else {
         historyIndex = commandHistory.length;
-        shellInput.value = '';
+        currentCommand = '';
+        shellCurrentInput.textContent = '';
       }
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      currentCommand += e.key;
+      shellCurrentInput.textContent = currentCommand;
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      currentCommand += ' ';
+      shellCurrentInput.textContent = currentCommand;
     }
+    
+    shellTerminal.scrollTop = shellTerminal.scrollHeight;
   });
 
   document.querySelectorAll('.new-tab-item').forEach(item => {
