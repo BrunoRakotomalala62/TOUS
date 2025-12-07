@@ -52,6 +52,12 @@ body {
   gap: 16px;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -63,6 +69,232 @@ body {
 
 .logo i {
   font-size: 1.4rem;
+}
+
+.menu-dropdown {
+  position: relative;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-btn.account-btn {
+  font-size: 1.2rem;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  padding: 8px 0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.dropdown-content.dropdown-right {
+  left: auto;
+  right: 0;
+}
+
+.dropdown-content.active {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-item i {
+  width: 18px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.dropdown-item.primary-btn {
+  background: var(--bg-tertiary);
+  margin: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  justify-content: center;
+}
+
+.dropdown-item.primary-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.dropdown-item.primary-btn i {
+  color: var(--accent-primary);
+}
+
+.dropdown-item.expandable {
+  justify-content: flex-start;
+}
+
+.dropdown-item .expand-icon {
+  margin-left: auto;
+  font-size: 0.75rem;
+}
+
+.dropdown-item.logout-item {
+  color: var(--accent-error);
+}
+
+.dropdown-item.logout-item i {
+  color: var(--accent-error);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+.plan-section {
+  padding: 12px 16px;
+}
+
+.plan-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+.plan-item i {
+  width: 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.plan-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plan-detail {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.plan-bar {
+  width: 60px;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.plan-bar-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+}
+
+.upgrade-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  color: var(--accent-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upgrade-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.upgrade-btn i {
+  color: inherit;
+}
+
+.theme-toggle-item {
+  justify-content: flex-start;
+}
+
+.theme-toggle {
+  display: flex;
+  margin-left: auto;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  color: var(--text-secondary);
+}
+
+.theme-btn.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .project-info {

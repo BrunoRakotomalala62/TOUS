@@ -12,9 +12,76 @@
 <body>
   <div class="app-container">
     <header class="top-bar">
-      <div class="logo">
-        <i class="fas fa-code"></i>
-        <span>CodeEditor</span>
+      <div class="header-left">
+        <div class="logo">
+          <i class="fas fa-code"></i>
+          <span>CodeEditor</span>
+        </div>
+        <div class="menu-dropdown" id="main-menu-dropdown">
+          <button class="menu-btn" id="main-menu-btn">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="dropdown-content" id="main-menu-content">
+            <div class="dropdown-item primary-btn">
+              <i class="fas fa-plus"></i>
+              <span>Create App</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-download"></i>
+              <span>Import code or design</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">
+              <i class="fas fa-home"></i>
+              <span>Home</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="far fa-folder"></i>
+              <span>Apps</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-globe"></i>
+              <span>Published apps</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-wifi"></i>
+              <span>Integrations</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-chart-bar"></i>
+              <span>Usage</span>
+            </div>
+            <div class="dropdown-item expandable">
+              <i class="fas fa-compass"></i>
+              <span>Explore more</span>
+              <i class="fas fa-chevron-down expand-icon"></i>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="plan-section">
+              <div class="plan-title">Your Starter Plan</div>
+              <div class="plan-item">
+                <i class="fas fa-chevron-right"></i>
+                <div class="plan-info">
+                  <span>Free Apps</span>
+                  <span class="plan-detail">0/10 created</span>
+                </div>
+                <div class="plan-bar"><div class="plan-bar-fill" style="width: 0%"></div></div>
+              </div>
+              <div class="plan-item">
+                <i class="fas fa-th"></i>
+                <div class="plan-info">
+                  <span>Agent Usage</span>
+                  <span class="plan-detail">0% used</span>
+                </div>
+                <div class="plan-bar"><div class="plan-bar-fill" style="width: 0%"></div></div>
+              </div>
+              <button class="upgrade-btn">
+                <i class="fas fa-star"></i>
+                Upgrade to Replit Core
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="project-info">
         <select id="project-select" class="project-selector">
@@ -31,6 +98,56 @@
         <button id="save-btn" class="btn btn-secondary">
           <i class="fas fa-save"></i> Save
         </button>
+        <div class="menu-dropdown" id="account-menu-dropdown">
+          <button class="menu-btn account-btn" id="account-menu-btn">
+            <i class="fas fa-user-circle"></i>
+          </button>
+          <div class="dropdown-content dropdown-right" id="account-menu-content">
+            <div class="dropdown-item">
+              <i class="fas fa-user"></i>
+              <span>Account</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-id-card"></i>
+              <span>Profile</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-bell"></i>
+              <span>Notifications</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-users"></i>
+              <span>Create Team</span>
+            </div>
+            <div class="dropdown-item">
+              <i class="fas fa-terminal"></i>
+              <span>CLUI</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item theme-toggle-item">
+              <i class="fas fa-palette"></i>
+              <span>Theme</span>
+              <div class="theme-toggle">
+                <button class="theme-btn active" id="theme-dark">
+                  <i class="fas fa-moon"></i>
+                </button>
+                <button class="theme-btn" id="theme-light">
+                  <i class="fas fa-sun"></i>
+                </button>
+              </div>
+            </div>
+            <div class="dropdown-item expandable">
+              <i class="fas fa-question-circle"></i>
+              <span>Help</span>
+              <i class="fas fa-chevron-right expand-icon"></i>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item logout-item">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Log out</span>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
