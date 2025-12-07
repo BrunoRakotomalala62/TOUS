@@ -1,6 +1,6 @@
-<!-- public/index.html -->
+<!-- index.html -->
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +18,12 @@
         <li><a href="#portfolio">Portfolio</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
+      <div class="theme-toggle">
+        <button id="theme-toggle-btn" aria-label="Changer de thème">
+          <i class="fas fa-sun"></i>
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
       <div class="burger">
         <div class="line1"></div>
         <div class="line2"></div>
@@ -26,6 +32,7 @@
     </nav>
   </header>
 
+  <!-- Le reste du HTML reste inchangé -->
   <section id="accueil" class="hero">
     <div class="hero-content">
       <h1>Bienvenue sur notre Site Magnifique</h1>

@@ -1564,12 +1564,12 @@ OTHER GUIDELINES:
 async function processAgentActions(response, codeBlocks) {
   const agentMessages = document.getElementById('agent-messages');
   
-  // Detect file paths from code block comments (e.g., "// filename.js", "<!-- filename.html -->", "/* filename.css */")
   const filePatterns = [];
+  const usedCodeBlockIndices = new Set();
   
-  for (const block of codeBlocks) {
+  for (let i = 0; i < codeBlocks.length; i++) {
+    const block = codeBlocks[i];
     const code = block.code;
-    // Check for filename in first line comment
     const jsComment = code.match(/^\/\/\s*([^\n]+\.(js|ts|jsx|tsx|py|json))/i);
     const htmlComment = code.match(/^<!--\s*([^\n]+\.(html|htm|xml))\s*-->/i);
     const cssComment = code.match(/^\/\*\s*([^\n]+\.(css|scss|less))\s*\*\//i);
@@ -1582,36 +1582,68 @@ async function processAgentActions(response, codeBlocks) {
     else if (hashComment) filename = hashComment[1].trim();
     
     if (filename) {
-      // Clean the filename
       filename = filename.replace(/[`"']/g, '').trim();
-      // Remove path prefixes like "public/" if they exist
       if (filename.includes('/')) {
         filename = filename.split('/').pop();
       }
       filePatterns.push({ filename, content: code, language: block.language });
+      usedCodeBlockIndices.add(i);
     }
   }
   
-  // Also check for explicit file creation mentions in the response
-  const explicitFileMatch = response.match(/(?:create|créer|crée|voici|here'?s?|file:?)\s*[:\s]*[`"']?([a-zA-Z0-9_\-]+\.(js|ts|jsx|tsx|html|css|py|json|md))[`"']?/gi);
+  const codeBlockPositions = [];
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  let match;
+  let blockIndex = 0;
+  while ((match = codeBlockRegex.exec(response)) !== null) {
+    codeBlockPositions.push({
+      index: blockIndex,
+      start: match.index,
+      end: match.index + match[0].length,
+      language: match[1] || 'text',
+      code: match[2].trim()
+    });
+    blockIndex++;
+  }
   
-  if (explicitFileMatch && codeBlocks.length > 0) {
-    for (const match of explicitFileMatch) {
-      const filenameMatch = match.match(/([a-zA-Z0-9_\-]+\.(js|ts|jsx|tsx|html|css|py|json|md))/i);
-      if (filenameMatch) {
-        const filename = filenameMatch[1];
-        // Find matching code block by language or use first one
-        const ext = filename.split('.').pop().toLowerCase();
-        const langMap = { js: 'javascript', ts: 'typescript', jsx: 'javascript', tsx: 'typescript', py: 'python', html: 'html', css: 'css', json: 'json' };
-        const targetLang = langMap[ext] || ext;
-        
-        const matchingBlock = codeBlocks.find(b => b.language === targetLang || b.language === ext) || codeBlocks[0];
-        
-        // Check if not already in filePatterns
-        if (!filePatterns.find(f => f.filename === filename)) {
-          filePatterns.push({ filename, content: matchingBlock.code, language: matchingBlock.language });
+  const fileNameRegex = /(?:(?:fichier|file|voici|here'?s?|créer|crée|create|modifier|modify|update|mettre à jour)[:\s]+)?[`"']?([a-zA-Z0-9_\-]+\.(js|ts|jsx|tsx|html|css|scss|py|json|md))[`"']?(?:\s*:)?/gi;
+  const fileNamePositions = [];
+  while ((match = fileNameRegex.exec(response)) !== null) {
+    const filename = match[1];
+    fileNamePositions.push({
+      filename: filename,
+      position: match.index
+    });
+  }
+  
+  for (const filePos of fileNamePositions) {
+    if (filePatterns.find(f => f.filename === filePos.filename)) {
+      continue;
+    }
+    
+    let nextBlockIndex = -1;
+    let minDistance = Infinity;
+    
+    for (const blockPos of codeBlockPositions) {
+      if (usedCodeBlockIndices.has(blockPos.index)) continue;
+      
+      if (blockPos.start > filePos.position) {
+        const distance = blockPos.start - filePos.position;
+        if (distance < minDistance && distance < 500) {
+          minDistance = distance;
+          nextBlockIndex = blockPos.index;
         }
       }
+    }
+    
+    if (nextBlockIndex >= 0) {
+      const block = codeBlockPositions[nextBlockIndex];
+      filePatterns.push({
+        filename: filePos.filename,
+        content: block.code,
+        language: block.language
+      });
+      usedCodeBlockIndices.add(nextBlockIndex);
     }
   }
   
