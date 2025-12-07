@@ -1317,27 +1317,27 @@ body {
   color: #e6edf3;
 }
 
-.shell-current-input {
-  color: #e6edf3;
-  white-space: pre;
-}
-
 .shell-prompt {
   color: #58a6ff;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
-.shell-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 16px;
-  background: #58a6ff;
-  animation: blink 1s infinite;
+.shell-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 0;
+  caret-color: #58a6ff;
 }
 
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+.shell-input::placeholder {
+  color: #6e7681;
+  opacity: 0.6;
 }
 
 .shell-command-line {

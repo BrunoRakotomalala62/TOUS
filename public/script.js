@@ -549,16 +549,15 @@ function setupShellPanel() {
   const shellClear = document.getElementById('shell-clear');
   const shellCloseTerminal = document.getElementById('shell-close-terminal');
   const shellTerminal = document.getElementById('shell-terminal');
-  const shellCurrentInput = document.getElementById('shell-current-input');
+  const shellInput = document.getElementById('shell-input');
   
   let commandHistory = [];
   let historyIndex = -1;
-  let currentCommand = '';
   let isExecuting = false;
 
   function openShell() {
     shellPanel.classList.add('active');
-    shellTerminal.focus();
+    setTimeout(() => shellInput.focus(), 100);
   }
 
   function closeShell() {
@@ -570,16 +569,15 @@ function setupShellPanel() {
 
   shellClear.addEventListener('click', () => {
     shellOutput.innerHTML = '';
-    currentCommand = '';
-    shellCurrentInput.textContent = '';
+    shellInput.value = '';
   });
 
   shellTerminal.addEventListener('click', () => {
-    shellTerminal.focus();
+    shellInput.focus();
   });
 
   async function executeCommand() {
-    const command = currentCommand.trim();
+    const command = shellInput.value.trim();
     if (!command || isExecuting) return;
 
     isExecuting = true;
@@ -594,8 +592,7 @@ function setupShellPanel() {
     `;
     shellOutput.appendChild(commandLine);
 
-    currentCommand = '';
-    shellCurrentInput.textContent = '';
+    shellInput.value = '';
 
     try {
       const response = await fetch('/api/shell', {
@@ -621,44 +618,30 @@ function setupShellPanel() {
 
     isExecuting = false;
     shellTerminal.scrollTop = shellTerminal.scrollHeight;
+    shellInput.focus();
   }
 
-  shellTerminal.addEventListener('keydown', (e) => {
+  shellInput.addEventListener('keydown', (e) => {
     if (isExecuting) return;
 
     if (e.key === 'Enter') {
       e.preventDefault();
       executeCommand();
-    } else if (e.key === 'Backspace') {
-      e.preventDefault();
-      currentCommand = currentCommand.slice(0, -1);
-      shellCurrentInput.textContent = currentCommand;
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (historyIndex > 0) {
         historyIndex--;
-        currentCommand = commandHistory[historyIndex];
-        shellCurrentInput.textContent = currentCommand;
+        shellInput.value = commandHistory[historyIndex];
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       if (historyIndex < commandHistory.length - 1) {
         historyIndex++;
-        currentCommand = commandHistory[historyIndex];
-        shellCurrentInput.textContent = currentCommand;
+        shellInput.value = commandHistory[historyIndex];
       } else {
         historyIndex = commandHistory.length;
-        currentCommand = '';
-        shellCurrentInput.textContent = '';
+        shellInput.value = '';
       }
-    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      currentCommand += e.key;
-      shellCurrentInput.textContent = currentCommand;
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      currentCommand += ' ';
-      shellCurrentInput.textContent = currentCommand;
     }
     
     shellTerminal.scrollTop = shellTerminal.scrollHeight;
