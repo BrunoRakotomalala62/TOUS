@@ -349,6 +349,60 @@
       </div>
     </div>
     
+    <div class="secrets-panel" id="secrets-panel">
+      <div class="secrets-header">
+        <button class="secrets-back" id="secrets-back">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="secrets-title">
+          <i class="fas fa-lock"></i>
+          <span>Secrets</span>
+        </div>
+        <button class="secrets-menu">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+      </div>
+      <div class="secrets-tabs">
+        <button class="secrets-tab active" data-tab="app">App Secrets</button>
+        <button class="secrets-tab" data-tab="env">Env Vars</button>
+        <button class="new-secret-btn" id="new-secret-btn">
+          <i class="fas fa-plus"></i> New Secret
+        </button>
+      </div>
+      <div class="secrets-list" id="secrets-list">
+        <div class="secrets-empty">
+          <i class="fas fa-lock"></i>
+          <p>No secrets yet</p>
+          <p class="secrets-hint">Click "+ New Secret" to add one</p>
+        </div>
+      </div>
+      <div class="secrets-footer">
+        <button class="secrets-footer-btn" id="edit-json-btn">
+          <i class="fas fa-code"></i> Edit as JSON
+        </button>
+        <button class="secrets-footer-btn" id="edit-env-btn">
+          <i class="fas fa-file"></i> Edit as .env
+        </button>
+      </div>
+    </div>
+    
+    <div class="modal" id="new-secret-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>New Secret</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="secret-key" placeholder="SECRET_KEY">
+          <input type="text" id="secret-value" placeholder="Value">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary close-modal">Cancel</button>
+          <button class="btn btn-primary" id="create-secret-btn">Add Secret</button>
+        </div>
+      </div>
+    </div>
+    
     <div class="new-tab-panel" id="new-tab-panel">
       <div class="new-tab-header">
         <input type="text" placeholder="Search for tools and files" id="new-tab-search">
@@ -468,7 +522,7 @@
               <span class="new-tab-item-desc">Free, easy-to-use key-value store for caching and session management</span>
             </div>
           </div>
-          <div class="new-tab-item">
+          <div class="new-tab-item" data-action="secrets">
             <i class="fas fa-lock" style="color: #a855f7;"></i>
             <div class="new-tab-item-info">
               <span class="new-tab-item-title">Secrets</span>

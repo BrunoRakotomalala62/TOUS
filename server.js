@@ -309,6 +309,61 @@ app.post('/api/create-project', (req, res) => {
   }
 });
 
+const secretsDir = path.join(__dirname, '.secrets');
+if (!fs.existsSync(secretsDir)) {
+  fs.mkdirSync(secretsDir, { recursive: true });
+}
+
+app.get('/api/secrets/:project', (req, res) => {
+  try {
+    const secretsFile = path.join(secretsDir, `${req.params.project}.json`);
+    if (!fs.existsSync(secretsFile)) {
+      return res.json({ secrets: {} });
+    }
+    const secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf-8'));
+    res.json({ secrets });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/secrets/:project', (req, res) => {
+  try {
+    const { key, value } = req.body;
+    const secretsFile = path.join(secretsDir, `${req.params.project}.json`);
+    
+    let secrets = {};
+    if (fs.existsSync(secretsFile)) {
+      secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf-8'));
+    }
+    
+    secrets[key] = value;
+    fs.writeFileSync(secretsFile, JSON.stringify(secrets, null, 2));
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/secrets/:project/:key', (req, res) => {
+  try {
+    const secretsFile = path.join(secretsDir, `${req.params.project}.json`);
+    
+    if (!fs.existsSync(secretsFile)) {
+      return res.status(404).json({ error: 'Secrets file not found' });
+    }
+    
+    const secrets = JSON.parse(fs.readFileSync(secretsFile, 'utf-8'));
+    delete secrets[req.params.key];
+    fs.writeFileSync(secretsFile, JSON.stringify(secrets, null, 2));
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Code Editor Platform running at http://0.0.0.0:${PORT}`);
   console.log('Ready to code!');

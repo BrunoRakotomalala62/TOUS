@@ -657,6 +657,154 @@ function setupShellPanel() {
   window.openShell = openShell;
 }
 
+function setupSecretsPanel() {
+  const secretsPanel = document.getElementById('secrets-panel');
+  const secretsBack = document.getElementById('secrets-back');
+  const secretsList = document.getElementById('secrets-list');
+  const newSecretBtn = document.getElementById('new-secret-btn');
+  const newSecretModal = document.getElementById('new-secret-modal');
+  const createSecretBtn = document.getElementById('create-secret-btn');
+  
+  let secrets = {};
+
+  function openSecrets() {
+    secretsPanel.classList.add('active');
+    loadSecrets();
+  }
+
+  function closeSecrets() {
+    secretsPanel.classList.remove('active');
+  }
+
+  secretsBack.addEventListener('click', closeSecrets);
+
+  async function loadSecrets() {
+    try {
+      const response = await fetch(`/api/secrets/${currentProject}`);
+      const data = await response.json();
+      secrets = data.secrets || {};
+      renderSecrets();
+    } catch (error) {
+      console.error('Failed to load secrets:', error);
+    }
+  }
+
+  function renderSecrets() {
+    const keys = Object.keys(secrets);
+    
+    if (keys.length === 0) {
+      secretsList.innerHTML = `
+        <div class="secrets-empty">
+          <i class="fas fa-lock"></i>
+          <p>No secrets yet</p>
+          <p class="secrets-hint">Click "+ New Secret" to add one</p>
+        </div>
+      `;
+      return;
+    }
+
+    secretsList.innerHTML = keys.map(key => `
+      <div class="secret-item" data-key="${key}">
+        <i class="fas fa-key"></i>
+        <span class="secret-key">${key}</span>
+        <div class="secret-value">
+          <span class="secret-dots">••••••••</span>
+          <button class="secret-action-btn toggle-secret" title="Show/Hide">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="secret-actions">
+          <button class="secret-action-btn delete-secret" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    secretsList.querySelectorAll('.toggle-secret').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const item = e.target.closest('.secret-item');
+        const key = item.dataset.key;
+        const dotsSpan = item.querySelector('.secret-dots');
+        const icon = btn.querySelector('i');
+        
+        if (dotsSpan.textContent === '••••••••') {
+          dotsSpan.textContent = secrets[key];
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          dotsSpan.textContent = '••••••••';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      });
+    });
+
+    secretsList.querySelectorAll('.delete-secret').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const item = e.target.closest('.secret-item');
+        const key = item.dataset.key;
+        
+        if (confirm(`Delete secret "${key}"?`)) {
+          try {
+            await fetch(`/api/secrets/${currentProject}/${key}`, { method: 'DELETE' });
+            delete secrets[key];
+            renderSecrets();
+            showConsoleOutput(`Deleted secret: ${key}`, 'success');
+          } catch (error) {
+            showConsoleOutput(`Error: ${error.message}`, 'error');
+          }
+        }
+      });
+    });
+  }
+
+  newSecretBtn.addEventListener('click', () => {
+    newSecretModal.classList.add('active');
+    document.getElementById('secret-key').focus();
+  });
+
+  createSecretBtn.addEventListener('click', async () => {
+    const key = document.getElementById('secret-key').value.trim().toUpperCase();
+    const value = document.getElementById('secret-value').value;
+    
+    if (!key) {
+      showConsoleOutput('Secret key is required', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/secrets/${currentProject}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        newSecretModal.classList.remove('active');
+        document.getElementById('secret-key').value = '';
+        document.getElementById('secret-value').value = '';
+        loadSecrets();
+        showConsoleOutput(`Added secret: ${key}`, 'success');
+      } else {
+        showConsoleOutput(`Error: ${data.error}`, 'error');
+      }
+    } catch (error) {
+      showConsoleOutput(`Error: ${error.message}`, 'error');
+    }
+  });
+
+  document.querySelectorAll('.secrets-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.secrets-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  window.openSecrets = openSecrets;
+}
+
 function setupNewTabPanel() {
   const newTabPanel = document.getElementById('new-tab-panel');
   const newTabBtn = document.getElementById('new-tab-btn');
@@ -691,6 +839,8 @@ function setupNewTabPanel() {
         }
       } else if (action === 'shell') {
         if (window.openShell) window.openShell();
+      } else if (action === 'secrets') {
+        if (window.openSecrets) window.openSecrets();
       }
     });
   });
@@ -828,6 +978,7 @@ function setupEventListeners() {
   setupMobileNavigation();
   setupNewTabPanel();
   setupShellPanel();
+  setupSecretsPanel();
   
   document.getElementById('project-select').addEventListener('change', (e) => {
     currentProject = e.target.value;
