@@ -1,1 +1,0 @@
-echo 'This is an empty repository. No application code found.'; echo 'Repository: https://github.com/BrunoRakotomalala62/TOUS'; echo 'To get started, add your source code and configure your build system.'

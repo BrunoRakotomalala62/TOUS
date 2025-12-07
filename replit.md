@@ -1,26 +1,55 @@
-# TOUS Project
+# CodeEditor - Online IDE
 
 ## Overview
-This is a GitHub repository imported from: https://github.com/BrunoRakotomalala62/TOUS
-
-**Current State**: The repository contains only a README.md file with the word "TOUS". This appears to be an empty or placeholder repository with no actual application code, dependencies, or build configuration.
+A dynamic code editor platform similar to Replit, built with Node.js, Express, and Monaco Editor. Features a dark theme interface with file management, code execution, and live preview capabilities.
 
 ## Project Structure
-- `README.md` - Contains only the text "TOUS"
-- `.replit` - Replit configuration file
-- `.git/` - Git repository metadata
+```
+/
+├── public/
+│   ├── index.html      # Main HTML file with IDE layout
+│   ├── styles.css      # Dark theme styling
+│   ├── script.js       # Monaco editor integration & functionality
+│   └── favicon.svg     # Site favicon
+├── projects/           # User projects storage
+│   └── my-project/     # Sample project with starter files
+├── temp/               # Temporary files for code execution
+├── server.js           # Express server with API endpoints
+├── package.json        # Node.js dependencies
+└── .gitignore          # Git ignore file
+```
+
+## Features
+- **Monaco Editor**: VS Code's editor with syntax highlighting, IntelliSense, and code formatting
+- **Multi-Language Support**: JavaScript, Python, HTML, CSS
+- **File Management**: Create, edit, delete files and folders
+- **Code Execution**: Run JavaScript and Python code with console output
+- **HTML Preview**: Live preview for HTML files
+- **Project Management**: Create and switch between multiple projects
+- **Dark Theme**: Professional dark mode interface
+- **Keyboard Shortcuts**: Ctrl/Cmd+S to save, Ctrl/Cmd+Enter to run
+
+## API Endpoints
+- `GET /api/projects` - List all projects
+- `GET /api/files/:project` - Get file tree for a project
+- `GET /api/file/:project/*` - Read file content
+- `POST /api/file/:project/*` - Save file content
+- `POST /api/create-file/:project` - Create new file or folder
+- `DELETE /api/file/:project/*` - Delete file or folder
+- `POST /api/run` - Execute code
+- `POST /api/create-project` - Create new project
 
 ## Recent Changes
-- **December 7, 2025**: Initial import from GitHub
-  - Repository cloned successfully
-  - No application code found to configure
-  - No dependencies to install
-  - No build system detected
+- **December 7, 2025**: Initial build
+  - Created full IDE interface with Monaco editor
+  - Implemented file management system
+  - Added code execution for JavaScript and Python
+  - Built dark theme UI similar to Replit
+  - Set up Express server with all API endpoints
 
-## Next Steps
-To make this a functional project, you would need to:
-1. Add source code files
-2. Add a package.json (for Node.js), requirements.txt (for Python), or equivalent dependency file
-3. Configure build tools if needed
-4. Add application logic
-5. Set up appropriate workflows for your chosen technology stack
+## Dependencies
+- express: Web server framework
+- cors: Cross-origin resource sharing
+
+## Running the Application
+The application runs on port 5000 with `node server.js`.

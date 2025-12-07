@@ -7,6 +7,14 @@ const fs = require('fs');
 const app = express();
 const PORT = 5000;
 
+function sanitizePath(basePath, userPath) {
+  const resolved = path.resolve(basePath, userPath);
+  if (!resolved.startsWith(path.resolve(basePath))) {
+    return null;
+  }
+  return resolved;
+}
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
@@ -89,7 +97,12 @@ app.get('/api/files/:project', (req, res) => {
 app.get('/api/file/:project/*', (req, res) => {
   try {
     const filePath = req.params[0];
-    const fullPath = path.join(projectsDir, req.params.project, filePath);
+    const projectPath = path.join(projectsDir, req.params.project);
+    const fullPath = sanitizePath(projectPath, filePath);
+    
+    if (!fullPath) {
+      return res.status(403).json({ error: 'Invalid file path' });
+    }
     
     if (!fs.existsSync(fullPath)) {
       return res.status(404).json({ error: 'File not found' });
@@ -105,7 +118,13 @@ app.get('/api/file/:project/*', (req, res) => {
 app.post('/api/file/:project/*', (req, res) => {
   try {
     const filePath = req.params[0];
-    const fullPath = path.join(projectsDir, req.params.project, filePath);
+    const projectPath = path.join(projectsDir, req.params.project);
+    const fullPath = sanitizePath(projectPath, filePath);
+    
+    if (!fullPath) {
+      return res.status(403).json({ error: 'Invalid file path' });
+    }
+    
     const { content } = req.body;
     
     const dir = path.dirname(fullPath);
@@ -123,7 +142,12 @@ app.post('/api/file/:project/*', (req, res) => {
 app.post('/api/create-file/:project', (req, res) => {
   try {
     const { name, type } = req.body;
-    const fullPath = path.join(projectsDir, req.params.project, name);
+    const projectPath = path.join(projectsDir, req.params.project);
+    const fullPath = sanitizePath(projectPath, name);
+    
+    if (!fullPath) {
+      return res.status(403).json({ error: 'Invalid file path' });
+    }
     
     if (fs.existsSync(fullPath)) {
       return res.status(400).json({ error: 'File already exists' });
@@ -148,7 +172,12 @@ app.post('/api/create-file/:project', (req, res) => {
 app.delete('/api/file/:project/*', (req, res) => {
   try {
     const filePath = req.params[0];
-    const fullPath = path.join(projectsDir, req.params.project, filePath);
+    const projectPath = path.join(projectsDir, req.params.project);
+    const fullPath = sanitizePath(projectPath, filePath);
+    
+    if (!fullPath) {
+      return res.status(403).json({ error: 'Invalid file path' });
+    }
     
     if (!fs.existsSync(fullPath)) {
       return res.status(404).json({ error: 'File not found' });

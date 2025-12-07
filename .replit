@@ -21,9 +21,22 @@ args = "Start"
 name = "Start"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash run.sh"
+args = "node server.js"
+waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "console"
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 43555
+externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "server.js"]
