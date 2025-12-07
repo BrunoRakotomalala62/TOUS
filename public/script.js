@@ -598,7 +598,7 @@ function setupShellPanel() {
       const response = await fetch('/api/shell', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command })
+        body: JSON.stringify({ command, project: currentProject })
       });
 
       const data = await response.json();

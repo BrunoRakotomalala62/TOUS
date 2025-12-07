@@ -251,7 +251,7 @@ app.post('/api/run', (req, res) => {
 });
 
 app.post('/api/shell', (req, res) => {
-  const { command } = req.body;
+  const { command, project } = req.body;
   
   if (!command || command.trim() === '') {
     return res.json({ output: '', type: 'empty' });
@@ -267,10 +267,12 @@ app.post('/api/shell', (req, res) => {
     }
   }
 
+  const workingDir = project ? path.join(projectsDir, project) : projectsDir;
+
   exec(command, { 
     timeout: 30000, 
     maxBuffer: 1024 * 1024 * 5,
-    cwd: __dirname
+    cwd: workingDir
   }, (error, stdout, stderr) => {
     if (error) {
       if (error.killed) {
