@@ -270,7 +270,7 @@ app.post('/api/shell', (req, res) => {
   exec(command, { 
     timeout: 30000, 
     maxBuffer: 1024 * 1024 * 5,
-    cwd: projectsDir
+    cwd: __dirname
   }, (error, stdout, stderr) => {
     if (error) {
       if (error.killed) {
