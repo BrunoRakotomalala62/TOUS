@@ -512,11 +512,95 @@ function setupDropdownMenus() {
   });
 }
 
+function setupMobileNavigation() {
+  const mobileNav = document.getElementById('mobile-nav');
+  const sidebar = document.getElementById('sidebar');
+  const rightPanel = document.getElementById('right-panel');
+  const editorWrapper = document.querySelector('.editor-wrapper');
+  const tabsContainer = document.querySelector('.tabs-container');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+  
+  function isMobile() {
+    return window.innerWidth <= 768;
+  }
+
+  function switchMobileView(view) {
+    if (!isMobile()) return;
+    
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    document.querySelector(`.mobile-nav-item[data-view="${view}"]`)?.classList.add('active');
+
+    sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
+    rightPanel.classList.remove('mobile-active');
+    editorWrapper.classList.remove('mobile-active');
+    if (tabsContainer) tabsContainer.style.display = 'none';
+
+    document.querySelectorAll('.console-panel, .preview-panel').forEach(p => p.classList.remove('active'));
+
+    switch(view) {
+      case 'files':
+        sidebar.classList.add('mobile-open');
+        sidebarOverlay.classList.add('active');
+        break;
+      case 'editor':
+        editorWrapper.classList.add('mobile-active');
+        if (tabsContainer) tabsContainer.style.display = 'block';
+        if (editor) editor.layout();
+        break;
+      case 'console':
+        rightPanel.classList.add('mobile-active');
+        document.getElementById('console-panel').classList.add('active');
+        break;
+      case 'preview':
+        rightPanel.classList.add('mobile-active');
+        document.getElementById('preview-panel').classList.add('active');
+        break;
+    }
+  }
+
+  mobileNav.querySelectorAll('.mobile-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      switchMobileView(item.dataset.view);
+    });
+  });
+
+  sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
+    switchMobileView('editor');
+  });
+
+  function handleResize() {
+    if (isMobile()) {
+      switchMobileView('editor');
+    } else {
+      sidebar.classList.remove('mobile-open');
+      sidebarOverlay.classList.remove('active');
+      rightPanel.classList.remove('mobile-active');
+      editorWrapper.classList.remove('mobile-active');
+      if (tabsContainer) tabsContainer.style.display = '';
+      document.getElementById('console-panel').classList.add('active');
+      document.getElementById('preview-panel').classList.remove('active');
+    }
+    if (editor) editor.layout();
+  }
+
+  window.addEventListener('resize', handleResize);
+  
+  if (isMobile()) {
+    switchMobileView('editor');
+  }
+}
+
 function setupEventListeners() {
   document.getElementById('run-btn').addEventListener('click', runCode);
   document.getElementById('save-btn').addEventListener('click', saveCurrentFile);
   
   setupDropdownMenus();
+  setupMobileNavigation();
   
   document.getElementById('project-select').addEventListener('change', (e) => {
     currentProject = e.target.value;
